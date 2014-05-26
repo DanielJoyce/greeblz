@@ -1,3 +1,5 @@
 http://moczys.com/2014/01/13/three-js-experiment-3-additive-geometry/
 
 http://stackoverflow.com/questions/19941637/how-do-i-export-obj-from-three-js-geometry-that-is-being-displaced-by-glsl-shade
+
+https://github.com/envisprecisely/THREE2STL
