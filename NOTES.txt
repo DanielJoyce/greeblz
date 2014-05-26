@@ -3,3 +3,65 @@ http://moczys.com/2014/01/13/three-js-experiment-3-additive-geometry/
 http://stackoverflow.com/questions/19941637/how-do-i-export-obj-from-three-js-geometry-that-is-being-displaced-by-glsl-shade
 
 https://github.com/envisprecisely/THREE2STL
+
+http://stackoverflow.com/questions/853740/jquery-xml-parsing-with-namespaces
+
+
+Webdav
+
+PROPFIND with Accept/Content-Type application/xml
+
+<?xml version="1.0"?>
+<a:propfind xmlns:a="DAV:">
+  <a:prop><a:resourcetype/></a:prop>
+</a:propfind>
+
+Results in:
+
+<?xml version="1.0" encoding="utf-8"?>
+<D:multistatus xmlns:D="DAV:" xmlns:ns0="urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/">
+<D:response>
+<D:href>http://localhost/daniel/dav/fooble.txt</D:href>
+<D:propstat>
+<D:prop>
+<resourcetype xmlns="DAV:"/></D:prop>
+<D:status>HTTP/1.1 404 Not Found</D:status>
+</D:propstat>
+</D:response>
+<D:response>
+<D:href>http://localhost/daniel/dav/bottle.stl</D:href>
+<D:propstat>
+<D:prop>
+<resourcetype xmlns="DAV:"/></D:prop>
+<D:status>HTTP/1.1 404 Not Found</D:status>
+</D:propstat>
+</D:response>
+<D:response>
+<D:href>http://localhost/daniel/dav/foo.txt</D:href>
+<D:propstat>
+<D:prop>
+<resourcetype xmlns="DAV:"/></D:prop>
+<D:status>HTTP/1.1 404 Not Found</D:status>
+</D:propstat>
+</D:response>
+<D:response>
+<D:href>http://localhost/daniel/dav/</D:href>
+<D:propstat>
+<D:prop>
+<D:resourcetype><D:collection/></D:resourcetype></D:prop>
+<D:status>HTTP/1.1 200 OK</D:status>
+</D:propstat>
+</D:response>
+<D:response>
+<D:href>http://localhost/daniel/dav/teapot.stl</D:href>
+<D:propstat>
+<D:prop>
+<resourcetype xmlns="DAV:"/></D:prop>
+<D:status>HTTP/1.1 404 Not Found</D:status>
+</D:propstat>
+</D:response>
+</D:multistatus>
+
+
+
+PUT works as well.
