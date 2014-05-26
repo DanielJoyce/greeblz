@@ -1,0 +1,81 @@
+/* Layout */
+html{
+   height: 100%;
+   margin: 0px;
+   padding: 0px;
+}
+
+body{
+   min-height: 100%;
+   min-width: 100%;
+   box-sizing: border-box;
+/*   border: 1px solid red; */
+   display: flex;
+   flex-flow: column;
+   margin: 0px; 
+}
+		
+#header,#footer{
+   height: 50px;
+   display: flex;
+   flex-flow: row;
+}
+
+#main{
+   display: flex;
+   flex: 1 1 100%;
+   flex-layout: row
+   /*flex-flow: column;*/
+}
+   
+#left,#right{
+   display: flex;
+   flex: 1 1;
+}
+   
+#content{
+   display: flex;
+   flex: 1 1 960px;
+   flex-layout: row;
+}
+ 
+ 
+#content canvas{
+   width: 80%;
+}  
+
+   
+/* Styling */   
+
+body{
+   font-family: sans-serif;
+}
+   
+#header,#footer,#main,#content,#left,#right{
+   box-sizing: border-box;
+   border: 1px solid #eee;
+}
+
+#footer {
+   justify-content: center;
+   align-items: center;
+}
+
+#editor canvas{
+   background-image: linear-gradient(#f7f7f7,#bbb);
+   border-radius: 3px;
+   box-shadow: 1px 1px 4px #454545;
+}  
+
+
+.wendy{
+   font-family: 'Wendy One', sans-serif;
+}
+
+.carter{
+   font-family: 'Carter One', cursive;
+}
+
+.logo{
+   font-size: 300%; 
+}

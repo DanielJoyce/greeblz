@@ -1,0 +1,127 @@
+/* Layout */
+
+html{
+   min-height: 100%;
+   min-width: 100%; 
+   margin: 0px; 
+   padding: 0px;
+   overflow: hidden;
+}
+
+body{
+/*   min-height: 100%;
+   min-width: 100%; */
+/*   border: 1px solid red; */
+   display: flex;
+   flex-flow: column;
+   margin: 0px; 
+   padding: 0px;
+}
+
+*{
+  box-sizing: border-box;
+}
+
+#header,#footer{
+   padding-left: 15px;
+   padding-right: 15px;
+   display: flex;
+   width: 100%;
+   position: absolute;
+   z-index: 100;  
+}
+
+#header{
+   top: 0px;
+   height: 50px; 
+}
+
+#toolbar{
+  width: 100%;
+  display: flex;
+  flex-flow: row;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+		
+#footer{
+   bottom: 0px;
+   height: 50px;
+   z-index: 100;
+}
+
+#main{
+   display: flex;
+   flex: 1 1 100%;
+   flex-layout: row
+   /*flex-flow: column;*/
+}
+      
+#content{
+   position: absolute;
+   top: 0px;
+   width: 100%;
+   height: 100%;
+   z-index: 10;
+}
+ 
+ 
+#content > canvas {
+   width: 100%;
+   height: 100%;
+}  
+
+
+   
+/* Styling */   
+
+body{
+   font-family: 'Open Sans', sans-serif;
+}
+
+.wendy{
+   font-family: 'Wendy One', sans-serif;
+}
+
+.logo{
+   font-family: 'Wendy One', sans-serif;
+   font-size: 300%; 
+   padding-left: 15px;
+   padding-right: 15px;
+}
+
+/*
+#header,#footer,#main,#content,#left,#right{
+   border: 1px solid #aa7777;
+}
+*/
+
+#footer {
+   justify-content: center;
+   align-items: center;
+}
+
+#toolbar > *:nth-child(1n+0) {
+  margin-left: 15px;
+}
+
+label::after{
+  content:": "
+}
+
+#content > canvas {
+   background-image: linear-gradient(#f7f7f7,#bbb);
+}  
+
+input,select,radio,textarea,button{
+  font-family: "Open Sans", sans-serif;
+  font-size: 100%;
+  border-radius: 3px;
+  border: 1px solid #454545
+
+}
+
+button{
+    background-image: linear-gradient(#f7f7f7,#bbb);
+}
