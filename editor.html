@@ -9,12 +9,14 @@
 <body>
   <script src="js/jquery-2.1.1.min.js"></script>
   <script src="js/three.js"></script>
+  <script src="js/STLLoader.js"></script>
 <!--  <script src="js/Detector.js"></script>
   <script src="js/Stats.js"></script> -->
   <script src="js/OrbitControls.js"></script>
   <script src="js/THREEx.KeyboardState.js"></script>
   <script src="js/THREEx.FullScreen.js"></script>
   <script src="js/THREEx.WindowResize.js"></script>
+  <script src="js/TypedGeometry.js"></script>
 
    <div id="header">
     <span class="logo">Greeblz!</span>
@@ -62,6 +64,12 @@ function init()
 	scene.add(camera);
 	camera.position.set(0,150,400);
 	camera.lookAt(scene.position);	
+
+	flashlight = new THREE.SpotLight(0xaaaaaa,1,0.0);
+	camera.add(flashlight);
+	flashlight.position.set(0,0,1);
+
+
 	// RENDERER
 //	if ( Detector.webgl )
 //        console.log( $("#editor").get());
@@ -121,7 +129,22 @@ function init()
 	var skyBox = new THREE.Mesh( skyGeometry, skyMaterial );
 	scene.add( skyBox );
 	
+        var loader = new THREE.STLLoader();
+        loader.load( "dav/bottle.stl", addModelToScene );
+
+	//flashlight.target = ;
+
 }
+
+
+function addModelToScene(geometry) 
+{
+        var material = new THREE.MeshPhongMaterial( { ambient: 0xff5533, color: 0xff5533, specular: 0x111111, shininess: 200 } );
+        model = new THREE.Mesh( geometry, material );
+//        model.scale.set(10,10,10);
+        scene.add( model );
+}
+
 
 function animate() 
 {
