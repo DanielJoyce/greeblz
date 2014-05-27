@@ -33,11 +33,11 @@ body{
 
 #header{
    top: 0px;
+   margin-top: 15px;
    height: 50px; 
 }
 
 #toolbar{
-  width: 100%;
   display: flex;
   flex-flow: row;
   justify-content: flex-end;
@@ -85,6 +85,7 @@ body{
 }
 
 .logo{
+   align-self: flex-start;
    font-family: 'Wendy One', sans-serif;
    font-size: 300%; 
    padding-left: 15px;
@@ -96,6 +97,11 @@ body{
    border: 1px solid #aa7777;
 }
 */
+
+#header {
+   flex-flow: row;
+   justify-content: space-between;
+}
 
 #footer {
    justify-content: center;
@@ -113,6 +119,22 @@ label::after{
 #content > canvas {
    background-image: linear-gradient(#f7f7f7,#bbb);
 }  
+
+div.search {
+    background-color: #ffffff;
+    border: 1px solid #454545;
+    border-radius: 3px;
+    box-shadow: 0px 0px 3px #454545;
+    padding:5px;
+}
+
+#toolbar {
+    background-color: rgba(255,255,255,0.6);
+    border: 1px solid #454545;
+    border-radius: 3px;
+    box-shadow: 0px 0px 3px #454545;
+    padding:5px;
+}
 
 input,select,radio,textarea,button{
   font-family: "Open Sans", sans-serif;
