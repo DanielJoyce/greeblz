@@ -304,7 +304,7 @@ function GreeblzScene(pubsub, geomTopic, geomLoadedTopic) {
  */
 function PubSub(pumpInterval) {
 
-	this._suspended = false;
+	this._suspend = false;
 
 	this._callbacks = {};
 
@@ -317,7 +317,10 @@ function PubSub(pumpInterval) {
 	 * and fires them off.
 	 */
 	PubSub.prototype._pump = function() {
-		if (!this._suspended) {
+		if (!this._suspend) {
+			// If pumping takes a long time, we should
+			// make sure this method is not re-entered while we are pumping
+			this._suspend = true;
 			var outer = this;
 			$.each(this._callbacks, function(topic, callbacks) {
 				var msg_queue = outer._messages[topic] || [];
@@ -329,6 +332,7 @@ function PubSub(pumpInterval) {
 				}
 			});
 			this._messages = {};
+			this._suspend = false;
 		}
 	};
 
@@ -380,12 +384,14 @@ function PubSub(pumpInterval) {
 	 * @param {Object} msg
 	 */
 	PubSub.prototype.publish = function(topic, msg) {
-		var msg_queue = this._messages[topic];
-		if (msg_queue == undefined) {
-			msg_queue = [];
-			this._messages[topic] = msg_queue;
+		if(!this._suspend) {
+			var msg_queue = this._messages[topic];
+			if (msg_queue == undefined) {
+				msg_queue = [];
+				this._messages[topic] = msg_queue;
+			}
+			msg_queue.push(msg);
 		}
-		msg_queue.push(msg);
 	};
 
 	/**
