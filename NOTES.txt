@@ -6,6 +6,10 @@ https://github.com/envisprecisely/THREE2STL
 
 http://stackoverflow.com/questions/853740/jquery-xml-parsing-with-namespaces
 
+PUB SUB using Jquery
+
+http://addyosmani.com/blog/jquery-1-7s-callbacks-feature-demystified/
+
 
 Webdav
 
@@ -61,7 +65,5 @@ Results in:
 </D:propstat>
 </D:response>
 </D:multistatus>
-
-
 
 PUT works as well.
