@@ -1,6 +1,6 @@
 "use strict";
 
-function GreeblzScene(pubsub, geomTopic, geomLoadedTopic) {
+function GreeblzScene(container, pubsub, geomTopic, geomLoadedTopic, keyboardTopic, mouseTopic) {
 
 	/*
 	* Three.js "tutorials by example" Author: Lee Stemkoski Date: July 2013
@@ -10,15 +10,15 @@ function GreeblzScene(pubsub, geomTopic, geomLoadedTopic) {
 	// MAIN
 	// standard global variables
 
-	this._container = null;
 	this._scene = null;
 	this._camera = null;
 	this._renderer = null;
-	this._controls = null;
+	this._orbitControls = null;
 	this._stats = null;
 	this._projector = null;
 	this._light = null;
 	this._keyboard = new THREEx.KeyboardState();
+	this._editMode = false;
 
 	// this._pubsub.subscribe()
 	// custom global variables
@@ -66,16 +66,16 @@ function GreeblzScene(pubsub, geomTopic, geomLoadedTopic) {
 	// else
 	// renderer = new THREE.CanvasRenderer();
 	this._renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-	this._container = $('#content').get(0);
-	this._container.appendChild(this._renderer.domElement);
+	container.appendChild(this._renderer.domElement);
 	// EVENTS
 	THREEx.WindowResize(this._renderer, this._camera);
-	THREEx.FullScreen.bindKey({
-		charCode : 'm'.charCodeAt(0)
-	});
+	// THREEx.FullScreen.bindKey({
+	// charCode : 'm'.charCodeAt(0)
+	// });
 	// CONTROLS
-	this._controls = new THREE.OrbitControls(this._camera, this._renderer.domElement);
-	this._controls.maxDistance = 4900;
+	this._orbitControls = new THREE.OrbitControls(this._camera, this._renderer.domElement);
+	this._orbitControls.maxDistance = 4900;
+	this._orbitControls.enabled = true;
 	// STATS
 	// stats = new Stats();
 	// stats.domElement.style.position = 'absolute';
@@ -86,6 +86,9 @@ function GreeblzScene(pubsub, geomTopic, geomLoadedTopic) {
 	this._light = new THREE.PointLight(0xffffff);
 	this._light.position.set(0, 250, 0);
 	this._scene.add(this._light);
+
+	var axes = new THREE.AxisHelper(1000);
+	this._scene.add(axes);
 
 	var skyboxImage = "img/greeblz-editor-skybox.png";
 	var skyboxTexture = THREE.ImageUtils.loadTexture(skyboxImage);
@@ -103,8 +106,6 @@ function GreeblzScene(pubsub, geomTopic, geomLoadedTopic) {
 	// CUSTOM //
 	// //////////
 	// axes
-	var axes = new THREE.AxisHelper(1000);
-	this._scene.add(axes);
 
 	var skyGeometry = new THREE.CubeGeometry(10000, 10000, 10000);
 
@@ -156,7 +157,7 @@ function GreeblzScene(pubsub, geomTopic, geomLoadedTopic) {
 	//				break;
 	//			}
 	//		});
-	console.log("FINISHED INIT");
+	// console.log("FINISHED INIT");
 	// };
 
 	GreeblzScene.prototype._addModelToScene = function(msg) {
@@ -181,6 +182,63 @@ function GreeblzScene(pubsub, geomTopic, geomLoadedTopic) {
 	};
 
 	pubsub.subscribe(geomLoadedTopic, this._addModelToScene.bind(this));
+
+	GreeblzScene.prototype._keyboardHandler = function(event) {
+		
+		console.log("KEYBOARD EVENT");
+		console.log(event);
+
+		// if (msg.type = "event") {
+		// var event = msg.event;
+		switch (event.keyCode) {
+			case 81:
+				// Q
+				// control.setSpace(control.space == "local" ? "world" : "local");
+				break;
+			case 87:
+				// W
+				// control.setMode("translate");
+				break;
+			case 69:
+				// E
+				// control.setMode("rotate");
+				break;
+			case 82:
+				// R
+				// control.setMode("scale");
+				break;
+			case 84:
+				// T Edit Mode
+				// control.setMode("scale");
+				this._orbitControls.enabled = !this._orbitControls.enabled;
+				break;
+			// case 187:
+			// case 107:
+			// // +,=,num+
+			// control.setSize(control.size + 0.1);
+			// break;
+			// case 189:
+			// case 10:
+			// // -,_,num-
+			// control.setSize(Math.max(control.size - 0.1, 0.1));
+			// break;
+		}
+		// }
+	};
+
+	// Make it focusable to get keyboard events
+	//$(this._renderer.domElement).attr('tabindex',1);
+
+	window.addEventListener('keydown', this._keyboardHandler.bind(this));
+
+	// pubsub.subscribe(keyboardTopic, this._keyboardHandler.bind(this));
+
+	// GreeblzScene.prototype._mouseHandler = function(msg) {
+	// console.log("MOUSE MSG");
+	// console.log(msg);
+	// };
+	//
+	// pubsub.subscribe(mouseTopic, this._mouseHandler.bind(this));
 
 	/*
 	 * function setInteractionMode() {
@@ -271,16 +329,20 @@ function GreeblzScene(pubsub, geomTopic, geomLoadedTopic) {
 	 * SELECTED = null; } container.style.cursor = 'auto'; }
 	 */
 	GreeblzScene.prototype._animate = function() {
+		var scope = this;
 		this._render();
 		this._update();
-		requestAnimationFrame(this._animate.bind(this));
+		var fps = 30;
+		setTimeout(function() {
+			requestAnimationFrame(scope._animate.bind(scope));
+		}, 1000 / fps);
 	};
 
 	GreeblzScene.prototype._update = function() {
 		if (this._keyboard.pressed("z")) {
 			console.log("WORKING!");
 		}
-		this._controls.update();
+		this._orbitControls.update();
 		// stats.update();
 	};
 
@@ -294,6 +356,7 @@ function GreeblzScene(pubsub, geomTopic, geomLoadedTopic) {
 	GreeblzScene.prototype.main = function() {
 		this._animate();
 	};
+
 };
 
 /**
@@ -312,11 +375,16 @@ function PubSub(pumpInterval) {
 
 	this._pumpinterval = pumpInterval || 50;
 
+	// var messagesToFire = false;
+
+	var timeout = null;
+
 	/**
 	 * message pump routine. Goes through queued messages and callbacks
 	 * and fires them off.
 	 */
 	PubSub.prototype._pump = function() {
+		console.debug("PUMP MSGS!");
 		if (!this._suspend) {
 			// If pumping takes a long time, we should
 			// make sure this method is not re-entered while we are pumping
@@ -334,10 +402,13 @@ function PubSub(pumpInterval) {
 			this._messages = {};
 			this._suspend = false;
 		}
+		timeout = null;
 	};
 
 	// Pump messages every 50 ms
-	setInterval(this._pump.bind(this), this._pumpinterval);
+	//setInterval(this._pump.bind(this), this._pumpinterval);
+
+	// Only pump as needed;
 
 	// PubSub.prototype._fire = function(topic, msg) {
 	// var callbacks = this._callbacks[topic];
@@ -384,13 +455,17 @@ function PubSub(pumpInterval) {
 	 * @param {Object} msg
 	 */
 	PubSub.prototype.publish = function(topic, msg) {
-		if(!this._suspend) {
+		if (!this._suspend) {
 			var msg_queue = this._messages[topic];
 			if (msg_queue == undefined) {
 				msg_queue = [];
 				this._messages[topic] = msg_queue;
 			}
 			msg_queue.push(msg);
+		}
+		// msgsToFire = true;
+		if (timeout == null) {
+			timeout = setTimeout(this._pump.bind(this), this._pumpinterval);
 		}
 	};
 
@@ -537,19 +612,25 @@ function StlStore(pubsub, storeTopic) {
 
 function GreeblzEditor() {
 
-	this._pubsub = new PubSub();
+	var pubsub = new PubSub();
 
-	this._stlTopic = "stl_geometry";
+	var stlTopic = "stl_geometry";
 
-	this._stlStore = new StlStore(this._pubsub, this._stlTopic);
+	var sceneKeyboardTopic = "sceneKeyboard";
 
-	this._stlLoadedTopic = this._stlStore.storeLoadedTopic;
+	var sceneMouseTopic = "sceneMouse";
 
-	this._scene = new GreeblzScene(this._pubsub, this._stlTopic, this._stlLoadedTopic);
+	var stlStore = new StlStore(pubsub, stlTopic);
+
+	var stlLoadedTopic = stlStore.storeLoadedTopic;
+
+	var container = $('#content').get(0);
+
+	var scene = new GreeblzScene(container, pubsub, stlTopic, stlLoadedTopic, sceneKeyboardTopic, sceneMouseTopic);
 
 	var stlFile = "dav/bottle.stl";
 
-	this._pubsub.publish(this._stlTopic, {
+	pubsub.publish(stlTopic, {
 		type : "load",
 		url : "dav/bottle.stl"
 	});
@@ -557,7 +638,7 @@ function GreeblzEditor() {
 	// loader.load("dav/bottle.stl", this._addModelToScene.bind(this));
 
 	GreeblzEditor.prototype.main = function() {
-		this._scene.main();
+		scene.main();
 	};
 
 }
