@@ -93,6 +93,9 @@ function GreeblzScene(container, pubsub, geomTopic, geomLoadedTopic, keyboardTop
 	var skyboxImage = "img/greeblz-editor-skybox.png";
 	var skyboxTexture = THREE.ImageUtils.loadTexture(skyboxImage);
 
+	var discImage = "img/greeblz-disc.png";
+	var discTexture = THREE.ImageUtils.loadTexture(discImage);
+
 	// FLOOR
 	/*
 	* var floorTexture = skyboxTexture var floorMaterial = new
@@ -110,11 +113,14 @@ function GreeblzScene(container, pubsub, geomTopic, geomLoadedTopic, keyboardTop
 	var skyGeometry = new THREE.CubeGeometry(10000, 10000, 10000);
 
 	var materialArray = [];
+
+	var material = new THREE.MeshBasicMaterial({
+		map : skyboxTexture,
+		side : THREE.BackSide
+	});
+
 	for (var i = 0; i < 6; i++)
-		materialArray.push(new THREE.MeshBasicMaterial({
-			map : skyboxTexture,
-			side : THREE.BackSide
-		}));
+		materialArray.push(material);
 	var skyMaterial = new THREE.MeshFaceMaterial(materialArray);
 	var skyBox = new THREE.Mesh(skyGeometry, skyMaterial);
 	this._scene.add(skyBox);
@@ -160,6 +166,71 @@ function GreeblzScene(container, pubsub, geomTopic, geomLoadedTopic, keyboardTop
 	// console.log("FINISHED INIT");
 	// };
 
+	GreeblzScene.prototype._chunkyArrow = function(length, thickness, headRatio, headWidthRatio, sides, material) {
+
+		var group = new THREE.Object3D();
+
+		var coneWidth = headWidthRatio * thickness / 2;
+		var coneLength = length * headRatio;
+
+		var shaftLength = (1 - headRatio) * length;
+
+		var coneGeom = new THREE.CylinderGeometry(0, coneWidth, coneLength, sides, 2);
+		var cylinderGeom = new THREE.CylinderGeometry(thickness / 2, thickness / 2, shaftLength, sides, 2);
+
+		var cone = new THREE.Mesh(coneGeom, material);
+		var cylinder = new THREE.Mesh(cylinderGeom, material);
+
+		cone.position.set(0, shaftLength + 0.5 * coneLength, 0);
+		cylinder.position.set(0, shaftLength / 2, 0);
+
+		group.add(cone);
+		group.add(cylinder);
+		return group;
+	};
+
+	GreeblzScene.prototype._hardpointWidget = function() {
+
+		var group = new THREE.Object3D();
+
+		var discMaterial = new THREE.MeshBasicMaterial({
+			map : discTexture,
+			side : THREE.DoubleSide,
+			alphaTest : 0.25
+		});
+
+		var blueMaterial = new THREE.MeshPhongMaterial({
+			color : 0x0000ff
+		});
+
+		var greenMaterial = new THREE.MeshPhongMaterial({
+			color : 0x00ff00
+		});
+
+		var radius = 10;
+		var segments = 16;
+
+		//		var circleGeometry = new THREE.CircleGeometry(radius, segments);
+		//		var circle = new THREE.Mesh(circleGeometry, whiteMaterial);
+
+		var planeGeometry = new THREE.PlaneGeometry(20, 20);
+
+		var plane = new THREE.Mesh(planeGeometry, discMaterial);
+		group.add(plane);
+
+		var chunkyArrowY = this._chunkyArrow(15, 2.5, 0.4, 1.5, 12, blueMaterial);
+
+		group.add(chunkyArrowY);
+
+		var chunkyArrowX = this._chunkyArrow(15, 2.5, 0.4, 1.5, 12, greenMaterial);
+
+		chunkyArrowX.rotation.x = 0.5 * Math.PI;
+
+		group.add(chunkyArrowX);
+
+		return group;
+	};
+
 	GreeblzScene.prototype._addModelToScene = function(msg) {
 		if (msg.type == "loaded") {
 			var url = msg.url;
@@ -173,7 +244,8 @@ function GreeblzScene(container, pubsub, geomTopic, geomLoadedTopic, keyboardTop
 			});
 			var model = new THREE.Mesh(geometry, material);
 			// model.scale.set(10,10,10);
-			this._scene.add(model);
+			//this._scene.add(model);
+			this._scene.add(this._hardpointWidget());
 			console.log("ADDED MODEL");
 		} else {
 			console.warn("Load failed?");
@@ -184,7 +256,7 @@ function GreeblzScene(container, pubsub, geomTopic, geomLoadedTopic, keyboardTop
 	pubsub.subscribe(geomLoadedTopic, this._addModelToScene.bind(this));
 
 	GreeblzScene.prototype._keyboardHandler = function(event) {
-		
+
 		console.log("KEYBOARD EVENT");
 		console.log(event);
 
