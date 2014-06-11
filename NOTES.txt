@@ -10,8 +10,32 @@ PUB SUB using Jquery
 
 http://addyosmani.com/blog/jquery-1-7s-callbacks-feature-demystified/
 
+Calculating mesh mass properties
+
+http://www.cs.berkeley.edu/~jfc/mirtich/massProps.html
+
+Robust repair of meshes.
+
+www.cs.wustl.edu/~taoju/research/scanpaper_final.pdf
+
+Dual Contouring
+
+http://www.frankpetterson.com/publications/dualcontour/dualcontour.pdf
+
+http://stackoverflow.com/questions/6485908/basic-dual-contouring-theory
+
+http://www.cs.rice.edu/~jwarren/research/index.html
+
+http://igl.ethz.ch/projects/Laplacian-mesh-processing/Laplacian-mesh-editing/
 
 Webdav
+
+
+STUPID IDEA, simply store a simple json doc with metata for each mesh
+
+foo.stl
+
+foo.metadat.json
 
 PROPFIND with Accept/Content-Type application/xml
 
