@@ -94,7 +94,7 @@ function GreeblzScene(container, pubsub, geomTopic, geomLoadedTopic, keyboardTop
 	var skyboxTexture = THREE.ImageUtils.loadTexture(skyboxImage);
 
 	var discImage = "img/greeblz-disc.png";
-	var discTexture = THREE.ImageUtils.loadTexture(discImage);
+	this._discTexture = THREE.ImageUtils.loadTexture(discImage);
 
 	// FLOOR
 	/*
@@ -124,6 +124,10 @@ function GreeblzScene(container, pubsub, geomTopic, geomLoadedTopic, keyboardTop
 	var skyMaterial = new THREE.MeshFaceMaterial(materialArray);
 	var skyBox = new THREE.Mesh(skyGeometry, skyMaterial);
 	this._scene.add(skyBox);
+
+	window.addEventListener('keydown', this._keyboardHandler.bind(this));
+
+	pubsub.subscribe(geomLoadedTopic, this._addModelToScene.bind(this));
 
 	//		projector = new THREE.Projector();
 	//
@@ -166,269 +170,290 @@ function GreeblzScene(container, pubsub, geomTopic, geomLoadedTopic, keyboardTop
 	// console.log("FINISHED INIT");
 	// };
 
-	GreeblzScene.prototype._chunkyArrow = function(length, thickness, headRatio, headWidthRatio, sides, material) {
+};
 
-		var group = new THREE.Object3D();
+GreeblzScene.prototype._chunkyArrow = function(length, thickness, headRatio, headWidthRatio, sides, material) {
 
-		var coneWidth = headWidthRatio * thickness / 2;
-		var coneLength = length * headRatio;
+	var group = new THREE.Object3D();
 
-		var shaftLength = (1 - headRatio) * length;
+	var coneWidth = headWidthRatio * thickness / 2;
+	var coneLength = length * headRatio;
 
-		var coneGeom = new THREE.CylinderGeometry(0, coneWidth, coneLength, sides, 2);
-		var cylinderGeom = new THREE.CylinderGeometry(thickness / 2, thickness / 2, shaftLength, sides, 2);
+	var shaftLength = (1 - headRatio) * length;
 
-		var cone = new THREE.Mesh(coneGeom, material);
-		var cylinder = new THREE.Mesh(cylinderGeom, material);
+	var coneGeom = new THREE.CylinderGeometry(0, coneWidth, coneLength, sides, 2);
+	var cylinderGeom = new THREE.CylinderGeometry(thickness / 2, thickness / 2, shaftLength, sides, 2);
 
-		cone.position.set(0, shaftLength + 0.5 * coneLength, 0);
-		cylinder.position.set(0, shaftLength / 2, 0);
+	var cone = new THREE.Mesh(coneGeom, material);
+	var cylinder = new THREE.Mesh(cylinderGeom, material);
 
-		group.add(cone);
-		group.add(cylinder);
-		return group;
-	};
+	cone.position.set(0, shaftLength + 0.5 * coneLength, 0);
+	cylinder.position.set(0, shaftLength / 2, 0);
 
-	GreeblzScene.prototype._hardpointWidget = function() {
+	group.add(cone);
+	group.add(cylinder);
+	return group;
+};
 
-		var group = new THREE.Object3D();
+GreeblzScene.prototype._hardpointWidget = function() {
 
-		var discMaterial = new THREE.MeshBasicMaterial({
-			map : discTexture,
-			side : THREE.DoubleSide,
-			alphaTest : 0.25
+	var group = new THREE.Object3D();
+
+	var discMaterial = new THREE.MeshBasicMaterial({
+		map : this._discTexture,
+		side : THREE.DoubleSide,
+		alphaTest : 0.25,
+		color : 0xff0000
+	});
+
+	var blueMaterial = new THREE.MeshPhongMaterial({
+		color : 0x0000ff
+	});
+
+	var greenMaterial = new THREE.MeshPhongMaterial({
+		color : 0x00ff00
+	});
+
+	var radius = 10;
+	var segments = 16;
+
+	//		var circleGeometry = new THREE.CircleGeometry(radius, segments);
+	//		var circle = new THREE.Mesh(circleGeometry, whiteMaterial);
+
+	var planeGeometry = new THREE.PlaneGeometry(20, 20);
+
+	var plane = new THREE.Mesh(planeGeometry, discMaterial);
+	group.add(plane);
+
+	var chunkyArrowY = this._chunkyArrow(15, 2.5, 0.4, 1.5, 12, blueMaterial);
+
+	group.add(chunkyArrowY);
+
+	var chunkyArrowX = this._chunkyArrow(15, 2.5, 0.4, 1.5, 12, greenMaterial);
+
+	chunkyArrowX.rotation.x = 0.5 * Math.PI;
+
+	group.add(chunkyArrowX);
+
+	return group;
+};
+
+GreeblzScene.prototype._addModelToScene = function(msg) {
+	if (msg.type == "loaded") {
+		var url = msg.url;
+		var store = msg.store;
+		var geometry = store.retrieve(url);
+		var material = new THREE.MeshPhongMaterial({
+			ambient : 0xff5533,
+			color : 0xff5533,
+			specular : 0x111111,
+			shininess : 200
 		});
+		var model = new THREE.Mesh(geometry, material);
+		// model.scale.set(10,10,10);
+		//this._scene.add(model);
 
-		var blueMaterial = new THREE.MeshPhongMaterial({
-			color : 0x0000ff
-		});
+		var hpWidget = this._hardpointWidget();
 
-		var greenMaterial = new THREE.MeshPhongMaterial({
-			color : 0x00ff00
-		});
+		this._scene.add(hpWidget);
 
-		var radius = 10;
-		var segments = 16;
+		// hpWidget.useQuaternion = true;
 
-		//		var circleGeometry = new THREE.CircleGeometry(radius, segments);
-		//		var circle = new THREE.Mesh(circleGeometry, whiteMaterial);
+		var dquat = new THREE.Quaternion();
 
-		var planeGeometry = new THREE.PlaneGeometry(20, 20);
+		var vect = (new THREE.Vector3(1, 1, 1)).normalize();
 
-		var plane = new THREE.Mesh(planeGeometry, discMaterial);
-		group.add(plane);
+		console.log(vect);
 
-		var chunkyArrowY = this._chunkyArrow(15, 2.5, 0.4, 1.5, 12, blueMaterial);
+		// vect.normalize();
 
-		group.add(chunkyArrowY);
+		dquat.setFromAxisAngle(vect, Math.PI / 6).normalize();
 
-		var chunkyArrowX = this._chunkyArrow(15, 2.5, 0.4, 1.5, 12, greenMaterial);
+		var quat = hpWidget.quaternion;
 
-		chunkyArrowX.rotation.x = 0.5 * Math.PI;
+		var tquat = quat.inverse().multiply(dquat).normalize();
 
-		group.add(chunkyArrowX);
+		console.log(tquat);
 
-		return group;
-	};
+		hpWidget.setRotationFromQuaternion(tquat);
 
-	GreeblzScene.prototype._addModelToScene = function(msg) {
-		if (msg.type == "loaded") {
-			var url = msg.url;
-			var store = msg.store;
-			var geometry = store.retrieve(url);
-			var material = new THREE.MeshPhongMaterial({
-				ambient : 0xff5533,
-				color : 0xff5533,
-				specular : 0x111111,
-				shininess : 200
-			});
-			var model = new THREE.Mesh(geometry, material);
-			// model.scale.set(10,10,10);
-			//this._scene.add(model);
-			this._scene.add(this._hardpointWidget());
-			console.log("ADDED MODEL");
-		} else {
-			console.warn("Load failed?");
-			console.warn(msg);
-		}
-	};
+		console.log("ADDED MODEL");
+	} else {
+		console.warn("Load failed?");
+		console.warn(msg);
+	}
+};
 
-	pubsub.subscribe(geomLoadedTopic, this._addModelToScene.bind(this));
+GreeblzScene.prototype._keyboardHandler = function(event) {
 
-	GreeblzScene.prototype._keyboardHandler = function(event) {
+	console.log("KEYBOARD EVENT");
+	console.log(event);
 
-		console.log("KEYBOARD EVENT");
-		console.log(event);
+	// if (msg.type = "event") {
+	// var event = msg.event;
+	switch (event.keyCode) {
+		case 81:
+			// Q
+			// control.setSpace(control.space == "local" ? "world" : "local");
+			break;
+		case 87:
+			// W
+			// control.setMode("translate");
+			break;
+		case 69:
+			// E
+			// control.setMode("rotate");
+			break;
+		case 82:
+			// R
+			// control.setMode("scale");
+			break;
+		case 84:
+			// T Edit Mode
+			// control.setMode("scale");
+			this._orbitControls.enabled = !this._orbitControls.enabled;
+			break;
+		// case 187:
+		// case 107:
+		// // +,=,num+
+		// control.setSize(control.size + 0.1);
+		// break;
+		// case 189:
+		// case 10:
+		// // -,_,num-
+		// control.setSize(Math.max(control.size - 0.1, 0.1));
+		// break;
+	}
+	// }
+};
 
-		// if (msg.type = "event") {
-		// var event = msg.event;
-		switch (event.keyCode) {
-			case 81:
-				// Q
-				// control.setSpace(control.space == "local" ? "world" : "local");
-				break;
-			case 87:
-				// W
-				// control.setMode("translate");
-				break;
-			case 69:
-				// E
-				// control.setMode("rotate");
-				break;
-			case 82:
-				// R
-				// control.setMode("scale");
-				break;
-			case 84:
-				// T Edit Mode
-				// control.setMode("scale");
-				this._orbitControls.enabled = !this._orbitControls.enabled;
-				break;
-			// case 187:
-			// case 107:
-			// // +,=,num+
-			// control.setSize(control.size + 0.1);
-			// break;
-			// case 189:
-			// case 10:
-			// // -,_,num-
-			// control.setSize(Math.max(control.size - 0.1, 0.1));
-			// break;
-		}
-		// }
-	};
+// Make it focusable to get keyboard events
+//$(this._renderer.domElement).attr('tabindex',1);
 
-	// Make it focusable to get keyboard events
-	//$(this._renderer.domElement).attr('tabindex',1);
+// pubsub.subscribe(keyboardTopic, this._keyboardHandler.bind(this));
 
-	window.addEventListener('keydown', this._keyboardHandler.bind(this));
+// GreeblzScene.prototype._mouseHandler = function(msg) {
+// console.log("MOUSE MSG");
+// console.log(msg);
+// };
+//
+// pubsub.subscribe(mouseTopic, this._mouseHandler.bind(this));
 
-	// pubsub.subscribe(keyboardTopic, this._keyboardHandler.bind(this));
+/*
+ * function setInteractionMode() {
+ *  }
+ *
+ * function onDocumentMouseMove(event) {
+ *
+ * event.preventDefault();
+ *
+ * mouse.x = (event.clientX / window.innerWidth) * 2 - 1; mouse.y =
+ * -(event.clientY / window.innerHeight) * 2 + 1;
+ *  //
+ *
+ * var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+ * projector.unprojectVector(vector, camera);
+ *
+ * var raycaster = new THREE.Raycaster(camera.position, vector.sub(
+ * camera.position).normalize());
+ *
+ * if (SELECTED) {
+ *
+ * var intersects = raycaster.intersectObject(plane);
+ * SELECTED.position.copy(intersects[0].point.sub(offset)); return;
+ *  }
+ *
+ * var intersects = raycaster.intersectObjects(objects);
+ *
+ * if (intersects.length > 0) {
+ *
+ * if (INTERSECTED != intersects[0].object) {
+ *
+ * if (INTERSECTED)
+ * INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
+ *
+ * INTERSECTED = intersects[0].object; INTERSECTED.currentHex =
+ * INTERSECTED.material.color.getHex();
+ *
+ * plane.position.copy(INTERSECTED.position); plane.lookAt(camera.position);
+ *  }
+ *
+ * container.style.cursor = 'pointer';
+ *  } else {
+ *
+ * if (INTERSECTED)
+ * INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
+ *
+ * INTERSECTED = null;
+ *
+ * container.style.cursor = 'auto';
+ *  }
+ *  }
+ *
+ * function onDocumentMouseDown(event) {
+ *
+ * event.preventDefault();
+ *
+ * var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+ * projector.unprojectVector(vector, camera);
+ *
+ * var raycaster = new THREE.Raycaster(camera.position, vector.sub(
+ * camera.position).normalize());
+ *
+ * var intersects = raycaster.intersectObjects(objects);
+ *
+ * if (intersects.length > 0) {
+ *
+ * controls.enabled = false;
+ *
+ * SELECTED = intersects[0].object;
+ *
+ * var intersects = raycaster.intersectObject(plane);
+ * offset.copy(intersects[0].point).sub(plane.position);
+ *
+ * container.style.cursor = 'move';
+ *  }
+ *  }
+ *
+ * function onDocumentMouseUp(event) {
+ *
+ * event.preventDefault();
+ *
+ * controls.enabled = true;
+ *
+ * if (INTERSECTED) {
+ *
+ * plane.position.copy(INTERSECTED.position);
+ *
+ * SELECTED = null; } container.style.cursor = 'auto'; }
+ */
+GreeblzScene.prototype._animate = function() {
+	var scope = this;
+	this._render();
+	this._update();
+	var fps = 30;
+	setTimeout(function() {
+		requestAnimationFrame(scope._animate.bind(scope));
+	}, 1000 / fps);
+};
 
-	// GreeblzScene.prototype._mouseHandler = function(msg) {
-	// console.log("MOUSE MSG");
-	// console.log(msg);
-	// };
-	//
-	// pubsub.subscribe(mouseTopic, this._mouseHandler.bind(this));
+GreeblzScene.prototype._update = function() {
+	if (this._keyboard.pressed("z")) {
+		console.log("WORKING!");
+	}
+	this._orbitControls.update();
+	// stats.update();
+};
 
-	/*
-	 * function setInteractionMode() {
-	 *  }
-	 *
-	 * function onDocumentMouseMove(event) {
-	 *
-	 * event.preventDefault();
-	 *
-	 * mouse.x = (event.clientX / window.innerWidth) * 2 - 1; mouse.y =
-	 * -(event.clientY / window.innerHeight) * 2 + 1;
-	 *  //
-	 *
-	 * var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
-	 * projector.unprojectVector(vector, camera);
-	 *
-	 * var raycaster = new THREE.Raycaster(camera.position, vector.sub(
-	 * camera.position).normalize());
-	 *
-	 * if (SELECTED) {
-	 *
-	 * var intersects = raycaster.intersectObject(plane);
-	 * SELECTED.position.copy(intersects[0].point.sub(offset)); return;
-	 *  }
-	 *
-	 * var intersects = raycaster.intersectObjects(objects);
-	 *
-	 * if (intersects.length > 0) {
-	 *
-	 * if (INTERSECTED != intersects[0].object) {
-	 *
-	 * if (INTERSECTED)
-	 * INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
-	 *
-	 * INTERSECTED = intersects[0].object; INTERSECTED.currentHex =
-	 * INTERSECTED.material.color.getHex();
-	 *
-	 * plane.position.copy(INTERSECTED.position); plane.lookAt(camera.position);
-	 *  }
-	 *
-	 * container.style.cursor = 'pointer';
-	 *  } else {
-	 *
-	 * if (INTERSECTED)
-	 * INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
-	 *
-	 * INTERSECTED = null;
-	 *
-	 * container.style.cursor = 'auto';
-	 *  }
-	 *  }
-	 *
-	 * function onDocumentMouseDown(event) {
-	 *
-	 * event.preventDefault();
-	 *
-	 * var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
-	 * projector.unprojectVector(vector, camera);
-	 *
-	 * var raycaster = new THREE.Raycaster(camera.position, vector.sub(
-	 * camera.position).normalize());
-	 *
-	 * var intersects = raycaster.intersectObjects(objects);
-	 *
-	 * if (intersects.length > 0) {
-	 *
-	 * controls.enabled = false;
-	 *
-	 * SELECTED = intersects[0].object;
-	 *
-	 * var intersects = raycaster.intersectObject(plane);
-	 * offset.copy(intersects[0].point).sub(plane.position);
-	 *
-	 * container.style.cursor = 'move';
-	 *  }
-	 *  }
-	 *
-	 * function onDocumentMouseUp(event) {
-	 *
-	 * event.preventDefault();
-	 *
-	 * controls.enabled = true;
-	 *
-	 * if (INTERSECTED) {
-	 *
-	 * plane.position.copy(INTERSECTED.position);
-	 *
-	 * SELECTED = null; } container.style.cursor = 'auto'; }
-	 */
-	GreeblzScene.prototype._animate = function() {
-		var scope = this;
-		this._render();
-		this._update();
-		var fps = 30;
-		setTimeout(function() {
-			requestAnimationFrame(scope._animate.bind(scope));
-		}, 1000 / fps);
-	};
+GreeblzScene.prototype._render = function() {
+	this._renderer.render(this._scene, this._camera);
+};
 
-	GreeblzScene.prototype._update = function() {
-		if (this._keyboard.pressed("z")) {
-			console.log("WORKING!");
-		}
-		this._orbitControls.update();
-		// stats.update();
-	};
-
-	GreeblzScene.prototype._render = function() {
-		this._renderer.render(this._scene, this._camera);
-	};
-
-	/**
-	 * Start the editor
-	 */
-	GreeblzScene.prototype.main = function() {
-		this._animate();
-	};
-
+/**
+ * Start the editor
+ */
+GreeblzScene.prototype.main = function() {
+	this._animate();
 };
 
 /**
@@ -449,128 +474,128 @@ function PubSub(pumpInterval) {
 
 	// var messagesToFire = false;
 
-	var timeout = null;
+	this._timeout = null;
 
-	/**
-	 * message pump routine. Goes through queued messages and callbacks
-	 * and fires them off.
-	 */
-	PubSub.prototype._pump = function() {
-		console.debug("PUMP MSGS!");
-		if (!this._suspend) {
-			// If pumping takes a long time, we should
-			// make sure this method is not re-entered while we are pumping
-			this._suspend = true;
-			var outer = this;
-			$.each(this._callbacks, function(topic, callbacks) {
-				var msg_queue = outer._messages[topic] || [];
-				for (var i = 0; i < msg_queue.length; i++) {
-					var msg = msg_queue[i];
-					console.debug("Fire Message:");
-					console.debug(msg);
-					callbacks.fire(msg);
-				}
-			});
-			this._messages = {};
-			this._suspend = false;
-		}
-		timeout = null;
-	};
+};
 
-	// Pump messages every 50 ms
-	//setInterval(this._pump.bind(this), this._pumpinterval);
-
-	// Only pump as needed;
-
-	// PubSub.prototype._fire = function(topic, msg) {
-	// var callbacks = this._callbacks[topic];
-	// if (callbacks != undefined) {
-	// callbacks.fire(msg);
-	// }
-	// };
-
-	/**
-	 * Subscribe to topic on pubsub, registering callback to handle
-	 * messages
-	 *
-	 * callback should be a function taking a single argument object
-	 * that represents a message
-	 *
-	 * @param {Object} topic
-	 * @param {Function} callback
-	 */
-	PubSub.prototype.subscribe = function(topic, callback) {
-		var callbacks = this._callbacks[topic];
-		if (callbacks == undefined) {
-			callbacks = $.Callbacks("unique");
-			this._callbacks[topic] = callbacks;
-		}
-		callbacks.add(callback);
-	};
-
-	/**
-	 * Remove callback from pubsub topic. Must be same callback that was
-	 * originally registered
-	 * @param {Object} topic
-	 * @param {Function} callback
-	 */
-	PubSub.prototype.unsubscribe = function(topic, callback) {
-		var callbacks = this._callbacks[topic];
-		if (callbacks != undefined) {
-			callbacks.remove(callback);
-		}
-	};
-
-	/**
-	 * Publish a message to a given topic
-	 * @param {Object} topic
-	 * @param {Object} msg
-	 */
-	PubSub.prototype.publish = function(topic, msg) {
-		if (!this._suspend) {
-			var msg_queue = this._messages[topic];
-			if (msg_queue == undefined) {
-				msg_queue = [];
-				this._messages[topic] = msg_queue;
-			}
-			msg_queue.push(msg);
-		}
-		// msgsToFire = true;
-		if (timeout == null) {
-			timeout = setTimeout(this._pump.bind(this), this._pumpinterval);
-		}
-	};
-
-	/**
-	 * Reset the pubsub, removing all topics and callbacks
-	 */
-	PubSub.prototype.reset = function() {
+/**
+ * message pump routine. Goes through queued messages and callbacks
+ * and fires them off.
+ */
+PubSub.prototype._pump = function() {
+	console.debug("PUMP MSGS!");
+	if (!this._suspend) {
+		// If pumping takes a long time, we should
+		// make sure this method is not re-entered while we are pumping
 		this._suspend = true;
+		var outer = this;
 		$.each(this._callbacks, function(topic, callbacks) {
-			callbacks.empty();
-			delete this._callbacks[topic];
+			var msg_queue = outer._messages[topic] || [];
+			for (var i = 0; i < msg_queue.length; i++) {
+				var msg = msg_queue[i];
+				console.debug("Fire Message:");
+				console.debug(msg);
+				callbacks.fire(msg);
+			}
 		});
 		this._messages = {};
 		this._suspend = false;
-	};
+	}
+	this._timeout = null;
+};
 
-	/**
-	 * Suspend handling of pubsub messages. All messages sent while
-	 * suspended will be dropped
-	 */
-	PubSub.prototype.suspend = function() {
-		// TODO cancel/reinstate setinterval to avoid busywait.
-		this._suspend = true;
-	};
+// Pump messages every 50 ms
+//setInterval(this._pump.bind(this), this._pumpinterval);
 
-	/**
-	 * Resume pubsub messages
-	 */
-	PubSub.prototype.resume = function() {
-		this._suspend = false;
-	};
+// Only pump as needed;
 
-}
+// PubSub.prototype._fire = function(topic, msg) {
+// var callbacks = this._callbacks[topic];
+// if (callbacks != undefined) {
+// callbacks.fire(msg);
+// }
+// };
+
+/**
+ * Subscribe to topic on pubsub, registering callback to handle
+ * messages
+ *
+ * callback should be a function taking a single argument object
+ * that represents a message
+ *
+ * @param {Object} topic
+ * @param {Function} callback
+ */
+PubSub.prototype.subscribe = function(topic, callback) {
+	var callbacks = this._callbacks[topic];
+	if (callbacks == undefined) {
+		callbacks = $.Callbacks("unique");
+		this._callbacks[topic] = callbacks;
+	}
+	callbacks.add(callback);
+};
+
+/**
+ * Remove callback from pubsub topic. Must be same callback that was
+ * originally registered
+ * @param {Object} topic
+ * @param {Function} callback
+ */
+PubSub.prototype.unsubscribe = function(topic, callback) {
+	var callbacks = this._callbacks[topic];
+	if (callbacks != undefined) {
+		callbacks.remove(callback);
+	}
+};
+
+/**
+ * Publish a message to a given topic
+ * @param {Object} topic
+ * @param {Object} msg
+ */
+PubSub.prototype.publish = function(topic, msg) {
+	if (!this._suspend) {
+		var msg_queue = this._messages[topic];
+		if (msg_queue == undefined) {
+			msg_queue = [];
+			this._messages[topic] = msg_queue;
+		}
+		msg_queue.push(msg);
+	}
+	// msgsToFire = true;
+	if (this._timeout == null) {
+		this._timeout = setTimeout(this._pump.bind(this), this._pumpinterval);
+	}
+};
+
+/**
+ * Reset the pubsub, removing all topics and callbacks
+ */
+PubSub.prototype.reset = function() {
+	this._suspend = true;
+	$.each(this._callbacks, function(topic, callbacks) {
+		callbacks.empty();
+		delete this._callbacks[topic];
+	});
+	this._messages = {};
+	this._suspend = false;
+};
+
+/**
+ * Suspend handling of pubsub messages. All messages sent while
+ * suspended will be dropped
+ */
+PubSub.prototype.suspend = function() {
+	// TODO cancel/reinstate setinterval to avoid busywait.
+	this._suspend = true;
+};
+
+/**
+ * Resume pubsub messages
+ */
+PubSub.prototype.resume = function() {
+	this._suspend = false;
+};
 
 /**
  * Handles loading of stls
@@ -597,6 +622,8 @@ function StlStore(pubsub, storeTopic) {
 	this._pubsub = pubsub;
 
 	this._loader = new THREE.STLLoader();
+
+	this._pubsub.subscribe(this.storeTopic, this._msgHandler.bind(this));
 
 	// this._baseAjaxOptions = {
 	// dataType : "json",
@@ -627,60 +654,58 @@ function StlStore(pubsub, storeTopic) {
 	// this._pubsub = pubsub;
 	// pubsub.subscribe(store_topic, _msg_handler);
 	// };
+};
 
-	StlStore.prototype._msgHandler = function(msg) {
-		switch(msg.type) {
-			case "load":
-				this._loadUrl(msg);
-				break;
-		}
-	};
+StlStore.prototype._msgHandler = function(msg) {
+	switch(msg.type) {
+		case "load":
+			this._loadUrl(msg);
+			break;
+	}
+};
 
-	this._pubsub.subscribe(this.storeTopic, this._msgHandler.bind(this));
-
-	StlStore.prototype._loadUrl = function(msg) {
-		var url = msg.url;
-		var dataType = msg.dataType;
-		if (url == undefined || url == null) {
+StlStore.prototype._loadUrl = function(msg) {
+	var url = msg.url;
+	var dataType = msg.dataType;
+	if (url == undefined || url == null) {
+		this._pubsub.publish(this.storeLoadedTopic, {
+			type : "error",
+			msg : "No url specified"
+		});
+	} else {
+		// TODO Use webworker in future
+		try {
+			this._loader.load(msg.url, this._storeGeometry.bind(this, url));
+		} catch(err) {
 			this._pubsub.publish(this.storeLoadedTopic, {
 				type : "error",
-				msg : "No url specified"
+				msg : "Loader encountered error",
+				exception : err,
 			});
-		} else {
-			// TODO Use webworker in future
-			try {
-				this._loader.load(msg.url, this._storeGeometry.bind(this, url));
-			} catch(err) {
-				this._pubsub.publish(this.storeLoadedTopic, {
-					type : "error",
-					msg : "Loader encountered error",
-					exception : err,
-				});
-			}
 		}
-	};
+	}
+};
 
-	/**
-	 * Retrieve the data from the store. This operation
-	 * removes the data.
-	 */
-	StlStore.prototype.retrieve = function(handle) {
-		var data = this._store[handle];
-		delete this._store[handle];
-		return data;
-	};
+/**
+ * Retrieve the data from the store. This operation
+ * removes the data.
+ */
+StlStore.prototype.retrieve = function(handle) {
+	var data = this._store[handle];
+	delete this._store[handle];
+	return data;
+};
 
-	StlStore.prototype._storeGeometry = function(url, geometry) {
-		console.debug("LOAD COMPLETE");
-		console.debug("TOPIC: " + this.storeLoadedTopic);
-		this._store[url] = geometry;
-		this._pubsub.publish(this.storeLoadedTopic, {
-			type : "loaded",
-			store : this,
-			url : url
-		});
-	};
-}
+StlStore.prototype._storeGeometry = function(url, geometry) {
+	console.debug("LOAD COMPLETE");
+	console.debug("TOPIC: " + this.storeLoadedTopic);
+	this._store[url] = geometry;
+	this._pubsub.publish(this.storeLoadedTopic, {
+		type : "loaded",
+		store : this,
+		url : url
+	});
+};
 
 function GreeblzEditor() {
 
@@ -698,7 +723,7 @@ function GreeblzEditor() {
 
 	var container = $('#content').get(0);
 
-	var scene = new GreeblzScene(container, pubsub, stlTopic, stlLoadedTopic, sceneKeyboardTopic, sceneMouseTopic);
+	this._scene = new GreeblzScene(container, pubsub, stlTopic, stlLoadedTopic, sceneKeyboardTopic, sceneMouseTopic);
 
 	var stlFile = "dav/bottle.stl";
 
@@ -706,14 +731,125 @@ function GreeblzEditor() {
 		type : "load",
 		url : "dav/bottle.stl"
 	});
-	// var loader = new THREE.STLLoader();
-	// loader.load("dav/bottle.stl", this._addModelToScene.bind(this));
 
-	GreeblzEditor.prototype.main = function() {
-		scene.main();
-	};
+};
 
+// var loader = new THREE.STLLoader();
+// loader.load("dav/bottle.stl", this._addModelToScene.bind(this));
+
+GreeblzEditor.prototype.main = function() {
+	this._scene.main();
+};
+
+function Command(context) {
+	this._context = context;
+};
+
+Command.prototype.execute = function() {
+	throw "Command Do does nothing!";
+};
+
+Command.prototype.unExecute = function() {
+	throw "Command Undo does nothing!";
+};
+
+function AddMeshCommand(mesh, scene) {
+	Command.call(this, {
+		mesh : mesh,
+		scene : scene
+	});
 }
+
+AddMeshCommand.prototype = new Command();
+
+AddMeshCommand.prototype.constructor = AddMeshCommand;
+
+AddMeshCommand.prototype.execute = function() {
+
+};
+
+AddMeshCommand.prototype.unExecute = function() {
+
+};
+
+function RemoveMeshCommand(mesh, scene) {
+	Command.call(this, {
+		mesh : mesh,
+		scene : scene
+	});
+};
+
+RemoveMeshCommand.prototype = new Command();
+
+RemoveMeshCommand.prototype.constructor = RemoveMeshCommand;
+
+RemoveMeshCommand.prototype.execute = AddMeshCommand.prototype.unExecute;
+
+RemoveMeshCommand.prototype.unExecute = AddMeshCommand.prototype.execute;
+
+function TranslateMeshCommand(mesh, axis, distance) {
+	Command.call(this, {
+		mesh : mesh,
+		axis : axis,
+		distance : distance
+	});
+}
+
+TranslateMeshCommand.prototype = new Command();
+
+TranslateMeshCommand.prototype.constructor = TranslateMeshCommand;
+
+TranslateMeshCommand.prototype.execute = function() {
+
+};
+
+TranslateMeshCommand.prototype.unExecute = function() {
+
+};
+
+function RotateMeshCommand(mesh, axis, angle) {
+	Command.call(this, {
+		mesh : mesh,
+		axis : axis,
+		angle : angle
+	});
+}
+
+RotateMeshCommand.prototype = new Command();
+
+RotateMeshCommand.prototype.constructor = RotateMeshCommand;
+
+RotateMeshCommand.prototype.execute = function() {
+
+};
+
+RotateMeshCommand.prototype.unExecute = function() {
+
+};
+
+function ScaleMeshCommand(mesh, xScale, yScale, zScale) {
+	Command.call(this, {
+		mesh : mesh,
+		axis : axis,
+		xScale : xScale,
+		yScale : yScale,
+		zScale : zScale,
+	});
+}
+
+ScaleMeshCommand.prototype = new Command();
+
+ScaleMeshCommand.prototype.constructor = ScaleMeshCommand;
+
+ScaleMeshCommand.prototype.execute = function() {
+
+};
+
+ScaleMeshCommand.prototype.unExecute = function() {
+
+};
+
+//function C
 
 // /**
 // * Register ajax transports for blob send/recieve and array buffer send/receive via XMLHttpRequest Level 2
