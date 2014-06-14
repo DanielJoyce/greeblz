@@ -1,0 +1,12 @@
+*************************************************
+* DESIGN NOTES
+*************************************************
+
+User can search for parts by tags and terms
+
+Parts can be mirrored
+
+Parts can be mounted to another part by clicking a 'hardpoint'.
+
+Parts can be rotated/adjusted around their mount
+
