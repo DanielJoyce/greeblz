@@ -202,14 +202,16 @@ define(['jquery', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowRe
 		var discMaterial = new THREE.MeshBasicMaterial({
 			map : this._discTexture,
 			side : THREE.DoubleSide,
+			shading : THREE.FlatShading,
 			alphaTest : 0.5,
-			color : 0xff0000,
-			transparent : true,
-			blending: "Additive"
+			color : 0x5079c2,
+			// transparent : true,
+			// blending: "Additive"
 		});
 
-		var blueMaterial = new THREE.MeshPhongMaterial({
-			color : 0x5079c2
+		var blueMaterial = new THREE.MeshLambertMaterial({
+			color : 0x5079c2,
+			shading : THREE.FlatShading,
 		});
 
 		var greenMaterial = new THREE.MeshPhongMaterial({
@@ -231,7 +233,7 @@ define(['jquery', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowRe
 
 		// group.add(chunkyArrowY);
 
-		var chunkyArrowX = this._chunkyArrow(15, 2.5, 0.4, 1.5, 12, blueMaterial);
+		var chunkyArrowX = this._chunkyArrow(15, 2.5, 0.4, 1.5, 6, blueMaterial);
 
 		chunkyArrowX.rotation.x = 0.5 * Math.PI;
 
