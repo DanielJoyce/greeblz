@@ -202,12 +202,14 @@ define(['jquery', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowRe
 		var discMaterial = new THREE.MeshBasicMaterial({
 			map : this._discTexture,
 			side : THREE.DoubleSide,
-			alphaTest : 0.25,
-			color : 0xff0000
+			alphaTest : 0.5,
+			color : 0xff0000,
+			transparent : true,
+			blending: "Additive"
 		});
 
 		var blueMaterial = new THREE.MeshPhongMaterial({
-			color : 0x0000ff
+			color : 0x5079c2
 		});
 
 		var greenMaterial = new THREE.MeshPhongMaterial({
@@ -225,11 +227,11 @@ define(['jquery', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowRe
 		var plane = new THREE.Mesh(planeGeometry, discMaterial);
 		group.add(plane);
 
-		var chunkyArrowY = this._chunkyArrow(15, 2.5, 0.4, 1.5, 12, blueMaterial);
+		// var chunkyArrowY = this._chunkyArrow(15, 2.5, 0.4, 1.5, 12, blueMaterial);
 
-		group.add(chunkyArrowY);
+		// group.add(chunkyArrowY);
 
-		var chunkyArrowX = this._chunkyArrow(15, 2.5, 0.4, 1.5, 12, greenMaterial);
+		var chunkyArrowX = this._chunkyArrow(15, 2.5, 0.4, 1.5, 12, blueMaterial);
 
 		chunkyArrowX.rotation.x = 0.5 * Math.PI;
 
