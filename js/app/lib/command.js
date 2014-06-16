@@ -92,7 +92,6 @@ define([], function() {"use strict";
 	function ScaleMeshCommand(mesh, xScale, yScale, zScale) {
 		Command.call(this, {
 			mesh : mesh,
-			axis : axis,
 			xScale : xScale,
 			yScale : yScale,
 			zScale : zScale,
@@ -112,6 +111,13 @@ define([], function() {"use strict";
 
 	};
 
-	
+	return {
+		Command : Command,
+		AddMeshCommand : AddMeshCommand,
+		RemoveMeshCommand : RemoveMeshCommand,
+		RotateMeshCommand : RotateMeshCommand,
+		ScaleMeshCommand : ScaleMeshCommand,
+		TranslateMeshCommand : TranslateMeshCommand
+	};
 
-}); 
+});
