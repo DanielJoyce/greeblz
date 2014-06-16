@@ -8,22 +8,10 @@
 		rel='stylesheet' type='text/css'>
 		<link rel="stylesheet" type="text/css" href="css/editor.css">
 		<link rel="stylesheet" type="text/css" href="css/font-awesome.min.css">
+		<script src="js/lib/require.js"></script>
 	</head>
 
 	<body>
-		<script src="js/jquery-2.1.1.min.js"></script>
-		<script src="js/three.js"></script>
-		<script src="js/STLLoader.js"></script>
-		<!--  <script src="js/Detector.js"></script>
-		<script src="js/Stats.js"></script> -->
-		<script src="js/OrbitControls.js"></script>
-		<script src="js/TransformControls.js"></script>
-		<script src="js/THREEx.KeyboardState.js"></script>
-		<script src="js/THREEx.FullScreen.js"></script>
-		<script src="js/THREEx.WindowResize.js"></script>
-		<script src="js/TypedGeometry.js"></script>
-		<script src="js/greeblz-editor.js"></script>
-
 		<div id="header">
 			<span class="logo">Greeblz!</span>
 			<div id="toolbar">
@@ -49,8 +37,45 @@
 		</div>
 
 		<script>
-			var editor = new GreeblzEditor();
-			editor.main();
+			requirejs.config({
+				baseUrl : 'js',
+				paths : {
+					// Thirdparty libraries
+					lib : 'lib',
+					// Application code
+					app : 'app',
+					// Application libraries
+					applib : 'app/lib',
+					jquery : 'lib/jquery-2.1.1.min'
+				},
+				shim : {
+					'lib/STLLoader' : {
+						deps : ['lib/three']
+					},
+					'lib/OrbitControls' : {
+						deps : ['lib/three']
+					},
+					'lib/TransformControls' : {
+						deps : ['lib/three']
+					},
+					'lib/THREEx.KeyboardState' : {
+						deps : ['lib/three']
+					},
+					'lib/THREEx.FullScreen' : {
+						deps : ['lib/three']
+					},
+					'lib/THREEx.WindowResize' : {
+						deps : ['lib/three']
+					},
+					'lib/TypedGeometry' : {
+						deps : ['lib/three']
+					},
+				}
+			});
+
+			requirejs(['app/greeblz-editor'], function(editor) {
+				editor.main();
+			});
 		</script>
 
 	</body>
