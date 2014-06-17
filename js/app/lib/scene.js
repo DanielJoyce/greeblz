@@ -16,9 +16,11 @@ define(['jquery', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowRe
 		this._orbitControls = null;
 		this._stats = null;
 		this._projector = null;
+		this._raycaster = null;
 		this._light = null;
 		//this._keyboard = new THREEx.KeyboardState();
 		this._editMode = false;
+		this._pickEnabled = true;
 
 		// this._pubsub.subscribe()
 		// custom global variables
@@ -48,14 +50,20 @@ define(['jquery', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowRe
 		// CAMERA
 		var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
 		var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
+
+		// Sertup Camera
 		this._camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
 		this._scene.add(this._camera);
 		this._camera.position.set(0, 150, 400);
 		this._camera.lookAt(this._scene.position);
-
+		// Add camera light
 		var flashlight = new THREE.SpotLight(0xaaaaaa, 1, 0.0);
 		this._camera.add(flashlight);
 		flashlight.position.set(0, 0, 1);
+
+		// Add picking support
+		this._raycaster = new THREE.Raycaster(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0));
+		this._projector = new THREE.Projector();
 
 		// RENDERER
 		// if ( Detector.webgl )
@@ -87,8 +95,8 @@ define(['jquery', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowRe
 		this._light.position.set(0, 250, 0);
 		this._scene.add(this._light);
 
-		var axes = new THREE.AxisHelper(1000);
-		this._scene.add(axes);
+		// var axes = new THREE.AxisHelper(1000);
+		// this._scene.add(axes);
 
 		var skyboxImage = "img/greeblz-editor-skybox.png";
 		var skyboxTexture = THREE.ImageUtils.loadTexture(skyboxImage);
@@ -128,6 +136,8 @@ define(['jquery', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowRe
 		window.addEventListener('keydown', this._keyboardHandler.bind(this));
 
 		pubsub.subscribe(geomLoadedTopic, this._addModelToScene.bind(this));
+
+		this._renderer.domElement.addEventListener("click", this._handlePick.bind(this));
 
 		//		projector = new THREE.Projector();
 		//
@@ -170,6 +180,32 @@ define(['jquery', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowRe
 		// console.log("FINISHED INIT");
 		// };
 
+	};
+
+	GreeblzScene.prototype._handlePick = function(event) {
+		if (this._pickEnabled) {
+			event.preventDefault();
+			var domElement = this._renderer.domElement;
+			var mouse = new THREE.Vector2();
+
+			console.log(event);
+
+			console.log(domElement);
+
+			var mouseVector = new THREE.Vector3((event.clientX / domElement.width ) * 2 - 1, -(event.clientY / domElement.height ) * 2 + 1, 0);
+
+			// Fixup mouse vector relative to camera.
+			this._projector.unprojectVector(mouseVector, this._camera);
+
+			console.log(mouseVector);
+
+			this._raycaster.set(this._camera.position, mouseVector.sub(this._camera.position).normalize());
+			var picked = this._raycaster.intersectObjects(this._scene.children, true);
+			console.debug(picked);
+			if (picked.length - 1 > 0) {
+				console.debug("HIT!");
+			}
+		}
 	};
 
 	GreeblzScene.prototype._chunkyArrow = function(length, thickness, headRatio, headWidthRatio, sides, material) {
