@@ -1,11 +1,6 @@
-define(['jquery', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowResize', 'lib/OrbitControls', 'lib/TransformControls'], function($) {"use strict";
+define(['jquery', 'applib/hardpoint', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowResize', 'lib/OrbitControls', 'lib/TransformControls'], function($, Hardpoint) {"use strict";
 
 	function GreeblzScene(container, pubsub, geomTopic, geomLoadedTopic, keyboardTopic, mouseTopic) {
-
-		/*
-		* Three.js "tutorials by example" Author: Lee Stemkoski Date: July 2013
-		* (three.js v59dev)
-		*/
 
 		// MAIN
 		// standard global variables
@@ -22,29 +17,6 @@ define(['jquery', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowRe
 		this._editMode = false;
 		this._pickEnabled = true;
 
-		// this._pubsub.subscribe()
-		// custom global variables
-		//this._cube = null;
-		//var INTERSECTED = false;
-		//var SELECTED = false;
-		// var mouse = new THREE.Vector2();
-		// var objects = [];
-		// Primary App mode, NAVIGATE or EDIT
-		// var mode = "NAVIGATE";
-		// Application context state
-		/*
-		var appCtxt = {
-		// Current global application mode
-		mode : "NAVIGATE",
-		// Current 'active' object being manipulated, if any
-		activeObject : null,
-
-		}*/
-
-		// _init();
-
-		// FUNCTIONS
-		// function _init() {
 		// SCENE
 		this._scene = new THREE.Scene();
 		// CAMERA
@@ -66,13 +38,9 @@ define(['jquery', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowRe
 		this._projector = new THREE.Projector();
 
 		// RENDERER
-		// if ( Detector.webgl )
-		// console.log( $("#editor").get());
 		this._renderer = new THREE.WebGLRenderer({
 			antialias : true
 		});
-		// else
-		// renderer = new THREE.CanvasRenderer();
 		this._renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 		container.appendChild(this._renderer.domElement);
 		// EVENTS
@@ -100,23 +68,6 @@ define(['jquery', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowRe
 
 		var skyboxImage = "img/greeblz-editor-skybox.png";
 		var skyboxTexture = THREE.ImageUtils.loadTexture(skyboxImage);
-
-		var discImage = "img/greeblz-disc.png";
-		this._discTexture = THREE.ImageUtils.loadTexture(discImage);
-
-		// FLOOR
-		/*
-		* var floorTexture = skyboxTexture var floorMaterial = new
-		* THREE.MeshBasicMaterial( { map: floorTexture, side: THREE.DoubleSide } );
-		* var floorGeometry = new THREE.PlaneGeometry(100, 100, 10, 10); var
-		* floor = new THREE.Mesh(floorGeometry, floorMaterial);
-		* floor.position.y = -0.5; floor.rotation.x = Math.PI / 2;
-		* scene.add(floor);
-		*/
-		// //////////
-		// CUSTOM //
-		// //////////
-		// axes
 
 		var skyGeometry = new THREE.CubeGeometry(10000, 10000, 10000);
 
@@ -188,94 +139,41 @@ define(['jquery', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowRe
 			var domElement = this._renderer.domElement;
 			var mouse = new THREE.Vector2();
 
-			console.log(event);
+			// console.log(event);
 
-			console.log(domElement);
+			// console.log(domElement);
 
 			var mouseVector = new THREE.Vector3((event.clientX / domElement.width ) * 2 - 1, -(event.clientY / domElement.height ) * 2 + 1, 0);
 
 			// Fixup mouse vector relative to camera.
 			this._projector.unprojectVector(mouseVector, this._camera);
 
-			console.log(mouseVector);
+			// console.log(mouseVector);
 
 			this._raycaster.set(this._camera.position, mouseVector.sub(this._camera.position).normalize());
 			var picked = this._raycaster.intersectObjects(this._scene.children, true);
-			console.debug(picked);
-			if (picked.length - 1 > 0) {
+			// console.debug(picked);
+			if (picked.length > 0) {
 				console.debug("HIT!");
+
+				var pickInfo = picked[0];
+
+				var face = pickInfo.face.clone();
+				var normal = face.normal.clone().normalize();
+				console.log(normal);
+				var point = pickInfo.point.clone();
+				var object = pickInfo.object;
+
+				var hpWidget = new Hardpoint();
+				this._scene.add(hpWidget);
+
+				hpWidget.position = point;
+				
+				var dquat = new THREE.Quaternion();
+				dquat.setFromUnitVectors(new THREE.Vector3(0,0,1), normal);
+				hpWidget.setRotationFromQuaternion(dquat);				
 			}
 		}
-	};
-
-	GreeblzScene.prototype._chunkyArrow = function(length, thickness, headRatio, headWidthRatio, sides, material) {
-
-		var group = new THREE.Object3D();
-
-		var coneWidth = headWidthRatio * thickness / 2;
-		var coneLength = length * headRatio;
-
-		var shaftLength = (1 - headRatio) * length;
-
-		var coneGeom = new THREE.CylinderGeometry(0, coneWidth, coneLength, sides, 2);
-		var cylinderGeom = new THREE.CylinderGeometry(thickness / 2, thickness / 2, shaftLength, sides, 2);
-
-		var cone = new THREE.Mesh(coneGeom, material);
-		var cylinder = new THREE.Mesh(cylinderGeom, material);
-
-		cone.position.set(0, shaftLength + 0.5 * coneLength, 0);
-		cylinder.position.set(0, shaftLength / 2, 0);
-
-		group.add(cone);
-		group.add(cylinder);
-		return group;
-	};
-
-	GreeblzScene.prototype._hardpointWidget = function() {
-
-		var group = new THREE.Object3D();
-
-		var discMaterial = new THREE.MeshBasicMaterial({
-			map : this._discTexture,
-			side : THREE.DoubleSide,
-			shading : THREE.FlatShading,
-			alphaTest : 0.5,
-			color : 0x5079c2,
-			// transparent : true,
-			// blending: "Additive"
-		});
-
-		var blueMaterial = new THREE.MeshLambertMaterial({
-			color : 0x5079c2,
-			shading : THREE.FlatShading,
-		});
-
-		var greenMaterial = new THREE.MeshPhongMaterial({
-			color : 0x00ff00
-		});
-
-		var radius = 10;
-		var segments = 16;
-
-		//		var circleGeometry = new THREE.CircleGeometry(radius, segments);
-		//		var circle = new THREE.Mesh(circleGeometry, whiteMaterial);
-
-		var planeGeometry = new THREE.PlaneGeometry(20, 20);
-
-		var plane = new THREE.Mesh(planeGeometry, discMaterial);
-		group.add(plane);
-
-		// var chunkyArrowY = this._chunkyArrow(15, 2.5, 0.4, 1.5, 12, blueMaterial);
-
-		// group.add(chunkyArrowY);
-
-		var chunkyArrowX = this._chunkyArrow(15, 2.5, 0.4, 1.5, 6, blueMaterial);
-
-		chunkyArrowX.rotation.x = 0.5 * Math.PI;
-
-		group.add(chunkyArrowX);
-
-		return group;
 	};
 
 	GreeblzScene.prototype._addModelToScene = function(msg) {
@@ -290,32 +188,8 @@ define(['jquery', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowRe
 				shininess : 200
 			});
 			var model = new THREE.Mesh(geometry, material);
-			// model.scale.set(10,10,10);
-			//this._scene.add(model);
-
-			var hpWidget = this._hardpointWidget();
-
-			this._scene.add(hpWidget);
-
-			// hpWidget.useQuaternion = true;
-
-			var dquat = new THREE.Quaternion();
-
-			var vect = (new THREE.Vector3(1, 1, 1)).normalize();
-
-			console.log(vect);
-
-			// vect.normalize();
-
-			dquat.setFromAxisAngle(vect, Math.PI / 6).normalize();
-
-			var quat = hpWidget.quaternion;
-
-			var tquat = quat.inverse().multiply(dquat).normalize();
-
-			console.log(tquat);
-
-			hpWidget.setRotationFromQuaternion(tquat);
+			//model.scale.set(10, 10, 10);
+			this._scene.add(model);
 
 			console.log("ADDED MODEL");
 		} else {
