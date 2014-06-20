@@ -1,7 +1,7 @@
 define(['jquery', 'applib/common', 'lib/three'], function($, common) {"use strict";
 
 	function Hardpoint() {
-		
+
 		THREE.Object3D.call(this);
 
 		this.id = THREE.Object3DIdCount++;
@@ -9,35 +9,37 @@ define(['jquery', 'applib/common', 'lib/three'], function($, common) {"use stric
 
 		var radius = 10;
 
-		// this._discTexture = THREE.ImageUtils.loadTexture(discImage);
-		//
-		// this._discMaterial = new THREE.MeshBasicMaterial({
-		// map : this._discTexture,
-		// side : THREE.DoubleSide,
-		// shading : THREE.FlatShading,
-		// alphaTest : 0.5,
-		// color : 0x5079c2,
-		// // transparent : true,
-		// // blending: "Additive"
-		// });
-		//		var circleGeometry = new THREE.CircleGeometry(radius, segments);
-		//		var circle = new THREE.Mesh(circleGeometry, whiteMaterial);
-
 		var planeGeometry = new THREE.PlaneGeometry(20, 20);
 
 		this._disc = new THREE.Mesh(planeGeometry, Hardpoint._baseDiscMaterial);
 		this._disc.position.z = 0.1;
 		this.add(this._disc);
 
-		// var chunkyArrowY = this._chunkyArrow(15, 2.5, 0.4, 1.5, 12, blueMaterial);
-
-		// group.add(chunkyArrowY);
-
 		var chunkyArrowX = this._chunkyArrow(15, 2.5, 0.4, 1.5, 6, common.materials.blueMaterial);
 
 		chunkyArrowX.rotation.x = 0.5 * Math.PI;
 
 		this.add(chunkyArrowX);
+
+		this._visible = true;
+
+		Object.defineProperty(this, "visible", {
+			get : function() {
+				return this._visible;
+			},
+			set : function(visible) {
+				this._visible = visible;
+				var children = this.children;
+				for (var i = 0; i < children.length; i++) {
+					children[i].traverse(function(child) {
+						child.visible = visible;
+						console.log("derp");
+					});
+				}
+			},
+			enumerable : true,
+			configurable : true
+		});
 
 	}
 
@@ -88,20 +90,7 @@ define(['jquery', 'applib/common', 'lib/three'], function($, common) {"use stric
 	Hardpoint.prototype = new THREE.Object3D();
 
 	Hardpoint.prototype.constructor = Hardpoint;
-	/*
-	 Object.defineProperty(Hardpoint.prototype, "visible", {
-	 get : function() {
-	 return this.visible;
-	 },
-	 set : function(visible) {
-	 this.traverse(function(child) {
-	 child.visible = visible;
-	 });
-	 },
-	 enumerable : true,
-	 configurable : true
-	 });
-	 */
+
 	Hardpoint.prototype._chunkyArrow = function(length, thickness, headRatio, headWidthRatio, sides, material) {
 
 		var group = new THREE.Object3D();
