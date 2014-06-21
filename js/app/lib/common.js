@@ -16,26 +16,30 @@ define(["lib/three"], function() {"use strict";
 	Materials.blueMaterial = new THREE.MeshLambertMaterial({
 		color : Colors.blue,
 		shading : THREE.FlatShading,
+		transparent : true
 	});
 
 	Materials.whiteMaterial = new THREE.MeshLambertMaterial({
 		color : Colors.white,
 		shading : THREE.FlatShading,
+		transparent : true
 	});
 
 	Materials.redMaterial = new THREE.MeshLambertMaterial({
 		color : Colors.red,
 		shading : THREE.FlatShading,
+		transparent : true
 	});
 
 	Materials.greenMaterial = new THREE.MeshLambertMaterial({
 		color : Colors.green,
 		shading : THREE.FlatShading,
+		transparent : true
 	});
 
 	return {
 		colors : Colors,
-		materials : Materials
+		materials : Materials,
 	};
 
 });
