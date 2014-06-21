@@ -18,6 +18,7 @@ define(['jquery', 'applib/hardpoint', 'lib/STLLoader', 'lib/THREEx.FullScreen', 
 		this._pickEnabled = true;
 
 		this._mouseMoved = false;
+		this._mouseDown = false;
 		this._pickableObjects = [];
 
 		// SCENE
@@ -143,6 +144,7 @@ define(['jquery', 'applib/hardpoint', 'lib/STLLoader', 'lib/THREEx.FullScreen', 
 		// we only want to perform a pick if this is a
 		// 'click' without the mouse moving at all
 		this._mouseMoved = false;
+		this._mouseDown = true;
 	};
 
 	GreeblzScene.prototype._handleMouseMove = function(event) {
@@ -150,12 +152,17 @@ define(['jquery', 'applib/hardpoint', 'lib/STLLoader', 'lib/THREEx.FullScreen', 
 		// we only want to perform a pick if this is a
 		// 'click' without the mouse moving at all
 		this._mouseMoved = true;
+		// Mouse is moving in scene, but we're not triggering camera movement
+		if (!this._mouseDown) {
+
+		}
 	};
 
 	GreeblzScene.prototype._handleMouseUp = function(event) {
 		// Because we are using the transform tools
 		// we only want to perform a pick if this is a
 		// 'click' without the mouse moving at all
+		this._mouseDown = false;
 		if (this._pickEnabled && !this._mouseMoved) {
 			event.preventDefault();
 			var domElement = this._renderer.domElement;
@@ -181,7 +188,7 @@ define(['jquery', 'applib/hardpoint', 'lib/STLLoader', 'lib/THREEx.FullScreen', 
 				var pickInfo = picked[0];
 
 				var face = pickInfo.face.clone();
-				var normal = face.normal.clone().normalize();
+				var normal = face.normal.clone();
 				//console.log(normal);
 				var point = pickInfo.point.clone();
 				var object = pickInfo.object;
@@ -194,11 +201,24 @@ define(['jquery', 'applib/hardpoint', 'lib/STLLoader', 'lib/THREEx.FullScreen', 
 
 				// m4.lookAt(normal.negate(), point, this._camera.up);
 
+				// var matrixWorldInverse = new THREE.Matrix4();
+				// matrixWorldInverse.getInverse(object.matrixWorld);
+				// while (object.parent !== undefined) {
+				var normalMatrix = new THREE.Matrix3().getNormalMatrix(object.matrixWorld);
+				//object.localToWorld(normal);
+				// object = object.parent;
+				normal.applyMatrix3(normalMatrix).normalize();
+				// }
+
+				// object.localToWorld(normal);
+				// normal.normalize();
+
 				var dquat = new THREE.Quaternion();
 				dquat.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
 				//dquat.setFromRotationMatrix(m4);
 				hpWidget.setRotationFromQuaternion(dquat.normalize());
 				hpWidget.rotation.z = 0;
+				hpWidget.opacity = 0.65;
 				this._scene.add(hpWidget);
 			}
 		}
@@ -219,8 +239,22 @@ define(['jquery', 'applib/hardpoint', 'lib/STLLoader', 'lib/THREEx.FullScreen', 
 			//model.scale.set(10, 10, 10);
 			this._scene.add(model);
 			this._pickableObjects.push(model);
+			var model2 = new THREE.Mesh(geometry, material);
+			// model2.attach(model);
+			model2.rotation.x = Math.PI / 3;
+			model2.rotation.y = Math.PI / 6;
+			//model2.scale.z = 3;
+			model2.position.x = 1;
+			//model2.attach(model);
+			model.add(model2);
 
-			console.log("ADDED MODEL");
+			model.rotation.x = Math.PI / 6;
+			model.rotation.z = Math.PI / 3;
+
+			this._pickableObjects.push(model2);
+			//this._scene.add(model2);
+
+			// console.log(model2);
 		} else {
 			console.warn("Load failed?");
 			console.warn(msg);
