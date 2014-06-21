@@ -33,7 +33,21 @@ define(['jquery', 'applib/common', 'lib/three'], function($, common) {"use stric
 				for (var i = 0; i < children.length; i++) {
 					children[i].traverse(function(child) {
 						child.visible = visible;
-						console.log("derp");
+					});
+				}
+			},
+			enumerable : true,
+			configurable : true
+		});
+
+		Object.defineProperty(this, "opacity", {
+			set : function(opacity) {
+				var children = this.children;
+				for (var i = 0; i < children.length; i++) {
+					children[i].traverse(function(child) {
+						if ( child instanceof THREE.Mesh) {
+							child.material.opacity = opacity;
+						}
 					});
 				}
 			},
@@ -56,6 +70,7 @@ define(['jquery', 'applib/common', 'lib/three'], function($, common) {"use stric
 			shading : THREE.FlatShading,
 			alphaTest : 0.5,
 			color : common.colors.white,
+			transparent : true,
 			// transparent : true,
 			// blending: "Additive"
 		});
@@ -69,6 +84,7 @@ define(['jquery', 'applib/common', 'lib/three'], function($, common) {"use stric
 			shading : THREE.FlatShading,
 			alphaTest : 0.5,
 			color : common.colors.blue,
+			transparent : true,
 			// transparent : true,
 			// blending: "Additive"
 		});
@@ -82,6 +98,7 @@ define(['jquery', 'applib/common', 'lib/three'], function($, common) {"use stric
 			shading : THREE.FlatShading,
 			alphaTest : 0.5,
 			color : common.colors.green,
+			transparent : true,
 			// transparent : true,
 			// blending: "Additive"
 		});
