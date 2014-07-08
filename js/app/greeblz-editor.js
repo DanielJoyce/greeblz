@@ -17,7 +17,7 @@ define(['jquery', 'applib/scene', 'applib/pubsub', 'applib/stlstore', 'applib/co
 
 		var stlLoadedTopic = stlStore.storeLoadedTopic;
 
-		var container = $('#content').get(0);
+		var container = $('#main-view').get(0);
 
 		this._scene = new Scene(container, pubsub, stlTopic, stlLoadedTopic, sceneKeyboardTopic, sceneMouseTopic);
 
@@ -35,7 +35,7 @@ define(['jquery', 'applib/scene', 'applib/pubsub', 'applib/stlstore', 'applib/co
 
 	GreeblzEditor.prototype.main = function() {
 
-		this._scene.main();
+		this._scene.animate();
 	};
 
 	//function C
