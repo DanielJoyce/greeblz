@@ -31,6 +31,11 @@ http://igl.ethz.ch/projects/Laplacian-mesh-processing/Laplacian-mesh-editing/
 Webdav
 
 
+http://www.cs.jhu.edu/~misha/Fall07/
+
+http://www.cs.jhu.edu/~misha/Code/
+
+
 STUPID IDEA, simply store a simple json doc with metata for each mesh
 
 foo.stl
