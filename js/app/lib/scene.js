@@ -1,4 +1,11 @@
-define(['jquery', 'applib/hardpoint', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowResize', 'lib/OrbitControls', 'lib/TransformControls'], function($, Hardpoint) {"use strict";
+define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/OrbitControls', 'lib/TransformControls'], function($, Hardpoint, common) {"use strict";
+
+	// var Mode = {};
+	//
+	// Mode.SELECT_HARDPOINT = "SELECT_HARDPOINT";
+	// Mode.MOVE_HARDPOINT = "MOVE_HARDPOINT";
+	// Mode.ORBIT = "ORBIT";
+	// Mode.PICK = "PICK";
 
 	function GreeblzScene(container, pubsub, geomTopic, geomLoadedTopic, keyboardTopic, mouseTopic) {
 
@@ -21,14 +28,18 @@ define(['jquery', 'applib/hardpoint', 'lib/STLLoader', 'lib/THREEx.FullScreen', 
 		this._mouseDown = false;
 		this._pickableObjects = [];
 
+		// this._mode = Mode.ORBIT;
+
 		// SCENE
 		this._scene = new THREE.Scene();
 		// CAMERA
-		var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
+		var SCREEN_WIDTH = container.clientWidth;
+		var SCREEN_HEIGHT = container.clientHeight;
 		var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
 
 		// Sertup Camera
 		this._camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
+		//this._camera = new THREE.OrthographicCamera(-SCREEN_WIDTH/20,SCREEN_WIDTH/20,SCREEN_HEIGHT/20,-SCREEN_HEIGHT/20,0.1, 20000);
 		this._scene.add(this._camera);
 		this._camera.position.set(0, 150, 400);
 		this._camera.lookAt(this._scene.position);
@@ -48,7 +59,7 @@ define(['jquery', 'applib/hardpoint', 'lib/STLLoader', 'lib/THREEx.FullScreen', 
 		this._renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 		container.appendChild(this._renderer.domElement);
 		// EVENTS
-		THREEx.WindowResize(this._renderer, this._camera);
+		common.windowResize(this._renderer, this._camera, container);
 		// THREEx.FullScreen.bindKey({
 		// charCode : 'm'.charCodeAt(0)
 		// });
@@ -217,8 +228,9 @@ define(['jquery', 'applib/hardpoint', 'lib/STLLoader', 'lib/THREEx.FullScreen', 
 				dquat.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
 				//dquat.setFromRotationMatrix(m4);
 				hpWidget.setRotationFromQuaternion(dquat.normalize());
-				hpWidget.rotation.z = 0;
 				hpWidget.opacity = 0.65;
+				object.add(hpWidget);
+				hpWidget.rotation.z = 0;
 				this._scene.add(hpWidget);
 			}
 		}
@@ -404,7 +416,7 @@ define(['jquery', 'applib/hardpoint', 'lib/STLLoader', 'lib/THREEx.FullScreen', 
 	 *
 	 * SELECTED = null; } container.style.cursor = 'auto'; }
 	 */
-	GreeblzScene.prototype._animate = function() {
+	GreeblzScene.prototype.animate = function() {
 		var scope = this;
 		this._render();
 		this._update();
@@ -421,13 +433,6 @@ define(['jquery', 'applib/hardpoint', 'lib/STLLoader', 'lib/THREEx.FullScreen', 
 
 	GreeblzScene.prototype._render = function() {
 		this._renderer.render(this._scene, this._camera);
-	};
-
-	/**
-	 * Start the editor
-	 */
-	GreeblzScene.prototype.main = function() {
-		this._animate();
 	};
 
 	return GreeblzScene;
