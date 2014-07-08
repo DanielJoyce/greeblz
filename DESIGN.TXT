@@ -2,6 +2,22 @@
 * DESIGN NOTES
 *************************************************
 
+STUPIDEST THING THAT WORKS!
+
+*************************************************
+* Editor  FUCK THIS FOR NOW!!!1111
+*************************************************
+
+User can load a part
+
+User can click to add a hardpoint to a part
+
+User can edit attributes of the hardpoint
+
+*************************************************
+* DESIGNER
+*************************************************
+
 User can search for parts by tags and terms
 
 Parts can be mirrored
