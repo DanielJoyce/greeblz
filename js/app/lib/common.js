@@ -1,9 +1,6 @@
 define(["lib/three"], function() {"use strict";
 
-	function Colors() {
-
-	}
-
+	var Colors = {};
 
 	Colors.blue = 0x5079c2;
 	Colors.red = 0xc25079;
@@ -37,9 +34,31 @@ define(["lib/three"], function() {"use strict";
 		transparent : true
 	});
 
+	function WindowResize(renderer, camera, hostElement) {
+		var callback = function() {
+			// notify the renderer of the size change
+			renderer.setSize(hostElement.clientWidth, hostElement.clientHeight);
+			// update the camera
+			camera.aspect = hostElement.clientWidth / hostElement.clientHeight;
+			camera.updateProjectionMatrix();
+		};
+		// bind the resize event
+		window.addEventListener('resize', callback, false);
+		// return .stop() the function to stop watching window resize
+		return {
+			/**
+			 * Stop watching window resize
+			 */
+			stop : function() {
+				window.removeEventListener('resize', callback);
+			}
+		};
+	}
+
 	return {
 		colors : Colors,
 		materials : Materials,
+		windowResize : WindowResize,
 	};
 
 });
