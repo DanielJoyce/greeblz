@@ -27,8 +27,8 @@ define(['jquery', 'applib/scene', 'applib/pubsub', 'applib/stlstore', 'applib/co
 
 		this._partView = new Scene({
 			container : container,
-			clearColor : 0x000000,
-			clearAlpha : 0.2,
+			clearColor : 0xEEEEEE,
+			clearAlpha : 1,
 			skybox : false
 		});
 
