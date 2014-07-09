@@ -19,14 +19,25 @@ define(['jquery', 'applib/scene', 'applib/pubsub', 'applib/stlstore', 'applib/co
 
 		var container = $('#main-view').get(0);
 
-		this._scene = new Scene(container, pubsub, stlTopic, stlLoadedTopic, sceneKeyboardTopic, sceneMouseTopic);
+		this._mainView = new Scene({
+			container : container
+		});
+
+		container = $('#part-view').get(0);
+
+		this._partView = new Scene({
+			container : container,
+			clearColor : 0x000000,
+			clearAlpha : 0.2,
+			skybox : false
+		});
 
 		var stlFile = "dav/bottle.stl";
 
-		pubsub.publish(stlTopic, {
-			type : "load",
-			url : "dav/bottle.stl"
-		});
+		// pubsub.publish(stlTopic, {
+		// type : "load",
+		// url : "dav/bottle.stl"
+		// });
 
 	};
 
@@ -35,7 +46,8 @@ define(['jquery', 'applib/scene', 'applib/pubsub', 'applib/stlstore', 'applib/co
 
 	GreeblzEditor.prototype.main = function() {
 
-		this._scene.animate();
+		this._mainView.animate();
+		this._partView.animate();
 	};
 
 	//function C
