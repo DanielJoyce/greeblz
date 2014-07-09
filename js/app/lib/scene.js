@@ -7,7 +7,9 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 	// Mode.ORBIT = "ORBIT";
 	// Mode.PICK = "PICK";
 
-	function GreeblzScene(container, pubsub, geomTopic, geomLoadedTopic, keyboardTopic, mouseTopic) {
+	function GreeblzScene(options) {
+
+		var opts = $.extend(true, {}, this.defaultOptions(), options);
 
 		// MAIN
 		// standard global variables
@@ -27,14 +29,15 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		this._mouseMoved = false;
 		this._mouseDown = false;
 		this._pickableObjects = [];
+		this._hasMouse = false;
 
 		// this._mode = Mode.ORBIT;
 
 		// SCENE
 		this._scene = new THREE.Scene();
 		// CAMERA
-		var SCREEN_WIDTH = container.clientWidth;
-		var SCREEN_HEIGHT = container.clientHeight;
+		var SCREEN_WIDTH = opts.container.clientWidth;
+		var SCREEN_HEIGHT = opts.container.clientHeight;
 		var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
 
 		// Sertup Camera
@@ -54,12 +57,14 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 
 		// RENDERER
 		this._renderer = new THREE.WebGLRenderer({
-			antialias : true
+			antialias : true,
+			alpha : opts.clearAlpha < 1.0
 		});
 		this._renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-		container.appendChild(this._renderer.domElement);
+		this._renderer.setClearColor(opts.clearColor, opts.clearAlpha);
+		opts.container.appendChild(this._renderer.domElement);
 		// EVENTS
-		common.windowResize(this._renderer, this._camera, container);
+		common.windowResize(this._renderer, this._camera, opts.container);
 		// THREEx.FullScreen.bindKey({
 		// charCode : 'm'.charCodeAt(0)
 		// });
@@ -81,31 +86,37 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		// var axes = new THREE.AxisHelper(1000);
 		// this._scene.add(axes);
 
-		var skyboxImage = "img/greeblz-editor-skybox.png";
-		var skyboxTexture = THREE.ImageUtils.loadTexture(skyboxImage);
+		if (opts.skybox) {
 
-		var skyGeometry = new THREE.CubeGeometry(10000, 10000, 10000);
+			var skyboxImage = "img/greeblz-editor-skybox.png";
+			var skyboxTexture = THREE.ImageUtils.loadTexture(skyboxImage);
 
-		var materialArray = [];
+			var skyGeometry = new THREE.CubeGeometry(10000, 10000, 10000);
 
-		var material = new THREE.MeshBasicMaterial({
-			map : skyboxTexture,
-			side : THREE.BackSide
-		});
+			var materialArray = [];
 
-		for (var i = 0; i < 6; i++)
-			materialArray.push(material);
-		var skyMaterial = new THREE.MeshFaceMaterial(materialArray);
-		var skyBox = new THREE.Mesh(skyGeometry, skyMaterial);
-		this._scene.add(skyBox);
+			var material = new THREE.MeshBasicMaterial({
+				map : skyboxTexture,
+				side : THREE.BackSide
+			});
+
+			for (var i = 0; i < 6; i++)
+				materialArray.push(material);
+			var skyMaterial = new THREE.MeshFaceMaterial(materialArray);
+			var skyBox = new THREE.Mesh(skyGeometry, skyMaterial);
+			this._scene.add(skyBox);
+
+		}
 
 		window.addEventListener('keydown', this._keyboardHandler.bind(this));
 
-		pubsub.subscribe(geomLoadedTopic, this._addModelToScene.bind(this));
+		//pubsub.subscribe(geomLoadedTopic, this._addModelToScene.bind(this));
 
 		this._renderer.domElement.addEventListener("mousedown", this._handleMouseDown.bind(this));
 		this._renderer.domElement.addEventListener("mousemove", this._handleMouseMove.bind(this));
 		this._renderer.domElement.addEventListener("mouseup", this._handleMouseUp.bind(this));
+		this._renderer.domElement.addEventListener("mouseenter", this._handleMouseEnter.bind(this));
+		this._renderer.domElement.addEventListener("mouseleave", this._handleMouseLeave.bind(this));
 
 		//		projector = new THREE.Projector();
 		//
@@ -150,6 +161,16 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 
 	};
 
+	GreeblzScene.prototype.defaultOptions = function() {
+		return {
+			pubSub : null,
+			topic : null,
+			skybox : true,
+			clearColor : 0x000000,
+			clearAlpha : 1.0
+		};
+	};
+
 	GreeblzScene.prototype._handleMouseDown = function(event) {
 		// Because we are using the transform tools
 		// we only want to perform a pick if this is a
@@ -167,6 +188,20 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		if (!this._mouseDown) {
 
 		}
+	};
+
+	GreeblzScene.prototype._handleMouseEnter = function(event) {
+		// Because we are using the transform tools
+		// we only want to perform a pick if this is a
+		// 'click' without the mouse moving at all
+		this._hasMouse = true;
+	};
+
+	GreeblzScene.prototype._handleMouseLeave = function(event) {
+		// Because we are using the transform tools
+		// we only want to perform a pick if this is a
+		// 'click' without the mouse moving at all
+		this._hasMouse = false;
 	};
 
 	GreeblzScene.prototype._handleMouseUp = function(event) {
@@ -275,6 +310,9 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 
 	GreeblzScene.prototype._keyboardHandler = function(event) {
 
+		if (!this._hasMouse)
+			return;
+			
 		console.log("KEYBOARD EVENT");
 		console.log(event);
 
@@ -422,7 +460,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		this._update();
 		var fps = 30;
 		setTimeout(function() {
-			requestAnimationFrame(scope._animate.bind(scope));
+			requestAnimationFrame(scope.animate.bind(scope));
 		}, 1000 / fps);
 	};
 
