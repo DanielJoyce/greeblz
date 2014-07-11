@@ -31,6 +31,9 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		this._pickableObjects = [];
 		this._hasMouse = false;
 
+		this._pubsub = opts.pubsub;
+		this._topic = opts.topic;
+
 		// this._mode = Mode.ORBIT;
 
 		// SCENE
@@ -110,7 +113,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 
 		window.addEventListener('keydown', this._keyboardHandler.bind(this));
 
-		//pubsub.subscribe(geomLoadedTopic, this._addModelToScene.bind(this));
+		this._pubsub.subscribe(this._topic, this._handlePubsubMsg.bind(this));
 
 		this._renderer.domElement.addEventListener("mousedown", this._handleMouseDown.bind(this));
 		this._renderer.domElement.addEventListener("mousemove", this._handleMouseMove.bind(this));
@@ -271,48 +274,56 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		}
 	};
 
-	GreeblzScene.prototype._addModelToScene = function(msg) {
-		if (msg.type == "loaded") {
-			var url = msg.url;
-			var store = msg.store;
-			var geometry = store.retrieve(url);
-			var material = new THREE.MeshPhongMaterial({
-				ambient : 0xff5533,
-				color : 0xff5533,
-				specular : 0x111111,
-				shininess : 200
-			});
-			var model = new THREE.Mesh(geometry, material);
-			//model.scale.set(10, 10, 10);
-			this._scene.add(model);
-			this._pickableObjects.push(model);
-			var model2 = new THREE.Mesh(geometry, material);
-			// model2.attach(model);
-			model2.rotation.x = Math.PI / 3;
-			model2.rotation.y = Math.PI / 6;
-			//model2.scale.z = 3;
-			model2.position.x = 1;
-			//model2.attach(model);
-			model.add(model2);
-
-			model.rotation.x = Math.PI / 6;
-			model.rotation.z = Math.PI / 3;
-
-			this._pickableObjects.push(model2);
-			//this._scene.add(model2);
-
-			// console.log(model2);
-		} else {
-			console.warn("Load failed?");
-			console.warn(msg);
+	GreeblzScene.prototype._handlePubsubMsg = function(msg) {
+		console.log("DERP");
+		console.log("DERP");
+		switch (msg.type) {
+			case "setRootModel":
+				this._setRootModel(msg.geometry, msg.pickable);
+				break;
+			default:
+				console.log("Unknown message:");
+				console.log(msg);
 		}
+	};
+
+	GreeblzScene.prototype._setRootModel = function(geometry, pickable) {
+		console.log("DERP DEWRP");
+		var material = new THREE.MeshPhongMaterial({
+			ambient : 0xff5533,
+			color : 0xff5533,
+			specular : 0x111111,
+			shininess : 200
+		});
+		var model = new THREE.Mesh(geometry, material);
+		//model.scale.set(10, 10, 10);
+		this._scene.add(model);
+		if (pickable) {
+			this._pickableObjects.push(model);
+		}
+		var model2 = new THREE.Mesh(geometry, material);
+		// model2.attach(model);
+		model2.rotation.x = Math.PI / 3;
+		model2.rotation.y = Math.PI / 6;
+		//model2.scale.z = 3;
+		model2.position.x = 1;
+		//model2.attach(model);
+		model.add(model2);
+
+		model.rotation.x = Math.PI / 6;
+		model.rotation.z = Math.PI / 3;
+
+		this._pickableObjects.push(model2);
+		//this._scene.add(model2);
+
+		// console.log(model2);
 	};
 
 	GreeblzScene.prototype._keyboardHandler = function(event) {
 
 		if (!this._hasMouse)
 			return;
-			
+
 		console.log("KEYBOARD EVENT");
 		console.log(event);
 

@@ -5,27 +5,35 @@ define(['jquery', 'applib/scene', 'applib/pubsub', 'applib/stlstore', 'applib/co
 		// Queue for undo/redo support
 		this._commandQueue = new Array(100);
 
-		var pubsub = new PubSub();
+		this._pubsub = new PubSub();
 
-		var stlTopic = "stl_geometry";
+		this._stlTopic = "stl_geometry";
 
 		var sceneKeyboardTopic = "sceneKeyboard";
 
 		var sceneMouseTopic = "sceneMouse";
 
-		var stlStore = new StlStore(pubsub, stlTopic);
+		this._stlStore = new StlStore(this._pubsub, this._stlTopic);
 
-		var stlLoadedTopic = stlStore.storeLoadedTopic;
+		this._stlLoadedTopic = this._stlStore.storeLoadedTopic;
+
+		this._partViewTopic = "partview";
+
+		this._mainViewTopic = "mainview";
 
 		var container = $('#main-view').get(0);
 
 		this._mainView = new Scene({
+			pubsub : this._pubsub,
+			topic : this._mainViewTopic,
 			container : container
 		});
 
 		container = $('#part-view').get(0);
 
 		this._partView = new Scene({
+			pubsub : this._pubsub,
+			topic : this._partViewTopic,
 			container : container,
 			clearColor : 0xEEEEEE,
 			clearAlpha : 1,
@@ -34,10 +42,12 @@ define(['jquery', 'applib/scene', 'applib/pubsub', 'applib/stlstore', 'applib/co
 
 		var stlFile = "dav/bottle.stl";
 
-		// pubsub.publish(stlTopic, {
-		// type : "load",
-		// url : "dav/bottle.stl"
-		// });
+		this._pubsub.subscribe(this._stlLoadedTopic, this._addModelToScene.bind(this));
+
+		this._pubsub.publish(this._stlTopic, {
+			type : "load",
+			url : "dav/bottle.stl"
+		});
 
 	};
 
@@ -50,6 +60,56 @@ define(['jquery', 'applib/scene', 'applib/pubsub', 'applib/stlstore', 'applib/co
 		this._partView.animate();
 	};
 
+	GreeblzEditor.prototype._addModelToScene = function(msg) {
+		console.log("DERP!!111");
+		if (msg.type == "loaded") {
+			var url = msg.url;
+			var store = msg.store;
+			var geometry = store.retrieve(url);
+			console.log("DERP!!3333");
+			// var material = new THREE.MeshPhongMaterial({
+				// ambient : 0xff5533,
+				// color : 0xff5533,
+				// specular : 0x111111,
+				// shininess : 200
+			// });
+			// var model = new THREE.Mesh(geometry, material);
+			// //model.scale.set(10, 10, 10);
+			// this._scene.add(model);
+			// this._pickableObjects.push(model);
+			// var model2 = new THREE.Mesh(geometry, material);
+			// // model2.attach(model);
+			// model2.rotation.x = Math.PI / 3;
+			// model2.rotation.y = Math.PI / 6;
+			// //model2.scale.z = 3;
+			// model2.position.x = 1;
+			// //model2.attach(model);
+			// model.add(model2);
+// 
+			// model.rotation.x = Math.PI / 6;
+			// model.rotation.z = Math.PI / 3;
+
+			//			this._pickableObjects.push(model2);
+			//this._scene.add(model2);
+
+			this._pubsub.publish(this._partViewTopic, {
+				type : "setRootModel",
+				geometry : geometry.clone(),
+				pickable : true
+			});
+			
+			this._pubsub.publish(this._mainViewTopic, {
+				type : "setRootModel",
+				geometry : geometry.clone(),
+				pickable : true
+			});
+
+		} else {
+			console.warn("Load failed?");
+			console.warn(msg);
+		}
+
+	};
 	//function C
 
 	// /**
