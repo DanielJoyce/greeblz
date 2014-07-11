@@ -20,6 +20,9 @@ define(['jquery'], function($) {"use strict";
 
 		this._timeout = null;
 
+		// Pump messages every 50 ms
+		setInterval(this._pump.bind(this), this._pumpinterval);
+
 	};
 
 	/**
@@ -27,29 +30,32 @@ define(['jquery'], function($) {"use strict";
 	 * and fires them off.
 	 */
 	PubSub.prototype._pump = function() {
-		console.debug("PUMP MSGS!");
+		//console.debug(this._messages);
+		//console.debug("PUMP MSGS!");
 		if (!this._suspend) {
 			// If pumping takes a long time, we should
 			// make sure this method is not re-entered while we are pumping
-			this._suspend = true;
+			//this._suspend = true;
 			var outer = this;
 			$.each(this._callbacks, function(topic, callbacks) {
-				var msg_queue = outer._messages[topic] || [];
-				for (var i = 0; i < msg_queue.length; i++) {
-					var msg = msg_queue[i];
-					console.debug("Fire Message:");
-					console.debug(msg);
-					callbacks.fire(msg);
+				if (outer._messages[topic]) {
+					var msgQueue = outer._messages[topic];
+					var msgCount = msgQueue.length;
+					var msgs = msgQueue.slice(0, msgCount);
+					outer._messages[topic] = outer._messages[topic].slice(msgCount);
+					var msg = undefined;
+					while ( msg = msgs.shift()) {
+						// for (var i = 0; i < msg_queue.length; i++) {
+						console.debug("Fire Message:");
+						console.debug(msg);
+						callbacks.fire(msg);
+					}
 				}
 			});
-			this._messages = {};
-			this._suspend = false;
+			//this._suspend = false;
 		}
 		this._timeout = null;
 	};
-
-	// Pump messages every 50 ms
-	//setInterval(this._pump.bind(this), this._pumpinterval);
 
 	// Only pump as needed;
 
@@ -104,12 +110,16 @@ define(['jquery'], function($) {"use strict";
 				msg_queue = [];
 				this._messages[topic] = msg_queue;
 			}
+			console.log("PUBLISH:");
+			console.log(msg);
 			msg_queue.push(msg);
 		}
 		// msgsToFire = true;
-		if (this._timeout == null) {
-			this._timeout = setTimeout(this._pump.bind(this), this._pumpinterval);
-		}
+
+		// if (this._timeout == null) {
+			// this._timeout = setTimeout(this._pump.bind(this), this._pumpinterval);
+		// }
+
 	};
 
 	/**
