@@ -216,34 +216,23 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			event.preventDefault();
 			var domElement = this._renderer.domElement;
 			var mouse = new THREE.Vector2();
-
-			// console.log(event);
-
-			// console.log(domElement);
-
-			var mouseVector = new THREE.Vector3((event.clientX / domElement.width ) * 2 - 1, -(event.clientY / domElement.height ) * 2 + 1, 0);
-
+			var pos = $(domElement).position();
+			var relX = event.pageX - pos.left;
+			var relY = event.pageY - pos.top;
+			var mouseVector = new THREE.Vector3((relX / domElement.width ) * 2 - 1, -(relY / domElement.height ) * 2 + 1, 0);
 			// Fixup mouse vector relative to camera.
 			this._projector.unprojectVector(mouseVector, this._camera);
-
-			// console.log(mouseVector);
-
 			this._raycaster.set(this._camera.position, mouseVector.sub(this._camera.position).normalize());
 			var picked = this._raycaster.intersectObjects(this._pickableObjects, true);
 			// console.debug(picked);
 			if (picked.length > 0) {
 				console.debug("HIT!");
-
 				var pickInfo = picked[0];
-
 				var face = pickInfo.face.clone();
 				var normal = face.normal.clone();
-				//console.log(normal);
 				var point = pickInfo.point.clone();
 				var object = pickInfo.object;
-
 				var hpWidget = new Hardpoint();
-
 				hpWidget.position = point;
 
 				// var m4 = new THREE.Matrix4();
@@ -288,7 +277,6 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 	};
 
 	GreeblzScene.prototype._setRootModel = function(geometry, pickable) {
-		console.log("DERP DEWRP");
 		var material = new THREE.MeshPhongMaterial({
 			ambient : 0xff5533,
 			color : 0xff5533,
@@ -301,19 +289,6 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		if (pickable) {
 			this._pickableObjects.push(model);
 		}
-		var model2 = new THREE.Mesh(geometry, material);
-		// model2.attach(model);
-		model2.rotation.x = Math.PI / 3;
-		model2.rotation.y = Math.PI / 6;
-		//model2.scale.z = 3;
-		model2.position.x = 1;
-		//model2.attach(model);
-		model.add(model2);
-
-		model.rotation.x = Math.PI / 6;
-		model.rotation.z = Math.PI / 3;
-
-		this._pickableObjects.push(model2);
 		//this._scene.add(model2);
 
 		// console.log(model2);
@@ -365,106 +340,6 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		// }
 	};
 
-	// Make it focusable to get keyboard events
-	//$(this._renderer.domElement).attr('tabindex',1);
-
-	// pubsub.subscribe(keyboardTopic, this._keyboardHandler.bind(this));
-
-	// GreeblzScene.prototype._mouseHandler = function(msg) {
-	// console.log("MOUSE MSG");
-	// console.log(msg);
-	// };
-	//
-	// pubsub.subscribe(mouseTopic, this._mouseHandler.bind(this));
-
-	/*
-	 * function setInteractionMode() {
-	 *  }
-	 *
-	 * function onDocumentMouseMove(event) {
-	 *
-	 * event.preventDefault();
-	 *
-	 * mouse.x = (event.clientX / window.innerWidth) * 2 - 1; mouse.y =
-	 * -(event.clientY / window.innerHeight) * 2 + 1;
-	 *  //
-	 *
-	 * var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
-	 * projector.unprojectVector(vector, camera);
-	 *
-	 * var raycaster = new THREE.Raycaster(camera.position, vector.sub(
-	 * camera.position).normalize());
-	 *
-	 * if (SELECTED) {
-	 *
-	 * var intersects = raycaster.intersectObject(plane);
-	 * SELECTED.position.copy(intersects[0].point.sub(offset)); return;
-	 *  }
-	 *
-	 * var intersects = raycaster.intersectObjects(objects);
-	 *
-	 * if (intersects.length > 0) {
-	 *
-	 * if (INTERSECTED != intersects[0].object) {
-	 *
-	 * if (INTERSECTED)
-	 * INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
-	 *
-	 * INTERSECTED = intersects[0].object; INTERSECTED.currentHex =
-	 * INTERSECTED.material.color.getHex();
-	 *
-	 * plane.position.copy(INTERSECTED.position); plane.lookAt(camera.position);
-	 *  }
-	 *
-	 * container.style.cursor = 'pointer';
-	 *  } else {
-	 *
-	 * if (INTERSECTED)
-	 * INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
-	 *
-	 * INTERSECTED = null;
-	 *
-	 * container.style.cursor = 'auto';
-	 *  }
-	 *  }
-	 *
-	 * function onDocumentMouseDown(event) {
-	 *
-	 * event.preventDefault();
-	 *
-	 * var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
-	 * projector.unprojectVector(vector, camera);
-	 *
-	 * var raycaster = new THREE.Raycaster(camera.position, vector.sub(
-	 * camera.position).normalize());
-	 *
-	 * var intersects = raycaster.intersectObjects(objects);
-	 *
-	 * if (intersects.length > 0) {
-	 *
-	 * controls.enabled = false;
-	 *
-	 * SELECTED = intersects[0].object;
-	 *
-	 * var intersects = raycaster.intersectObject(plane);
-	 * offset.copy(intersects[0].point).sub(plane.position);
-	 *
-	 * container.style.cursor = 'move';
-	 *  }
-	 *  }
-	 *
-	 * function onDocumentMouseUp(event) {
-	 *
-	 * event.preventDefault();
-	 *
-	 * controls.enabled = true;
-	 *
-	 * if (INTERSECTED) {
-	 *
-	 * plane.position.copy(INTERSECTED.position);
-	 *
-	 * SELECTED = null; } container.style.cursor = 'auto'; }
-	 */
 	GreeblzScene.prototype.animate = function() {
 		var scope = this;
 		this._render();
