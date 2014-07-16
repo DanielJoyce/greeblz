@@ -8,31 +8,32 @@ define(["lib/three"], function() {"use strict";
 	Colors.white = 0xdedede;
 
 	function Materials() {
-	};
 
-	Materials.blueMaterial = new THREE.MeshLambertMaterial({
-		color : Colors.blue,
-		shading : THREE.FlatShading,
-		transparent : true
-	});
+		this.blueMaterial = new THREE.MeshLambertMaterial({
+			color : Colors.blue,
+			shading : THREE.FlatShading,
+			transparent : true
+		});
 
-	Materials.whiteMaterial = new THREE.MeshLambertMaterial({
-		color : Colors.white,
-		shading : THREE.FlatShading,
-		transparent : true
-	});
+		this.whiteMaterial = new THREE.MeshLambertMaterial({
+			color : Colors.white,
+			shading : THREE.FlatShading,
+			transparent : true
+		});
 
-	Materials.redMaterial = new THREE.MeshLambertMaterial({
-		color : Colors.red,
-		shading : THREE.FlatShading,
-		transparent : true
-	});
+		this.redMaterial = new THREE.MeshLambertMaterial({
+			color : Colors.red,
+			shading : THREE.FlatShading,
+			transparent : true
+		});
 
-	Materials.greenMaterial = new THREE.MeshLambertMaterial({
-		color : Colors.green,
-		shading : THREE.FlatShading,
-		transparent : true
-	});
+		this.greenMaterial = new THREE.MeshLambertMaterial({
+			color : Colors.green,
+			shading : THREE.FlatShading,
+			transparent : true
+		});
+
+	}
 
 	function WindowResize(renderer, camera, hostElement) {
 		var callback = function() {

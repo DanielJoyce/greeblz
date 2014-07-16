@@ -4,6 +4,41 @@ define(['jquery', 'applib/common', 'lib/three'], function($, common) {"use stric
 
 		THREE.Object3D.call(this);
 
+		this._discTexture = THREE.ImageUtils.loadTexture(Hardpoint._discImage);
+
+		this._baseDiscMaterial = new THREE.MeshBasicMaterial({
+			map : this._discTexture,
+			side : THREE.DoubleSide,
+			shading : THREE.FlatShading,
+			alphaTest : 0.5,
+			color : common.colors.white,
+			transparent : true,
+			// transparent : true,
+			// blending: "Additive"
+		});
+
+		this._selectedDiscMaterial = new THREE.MeshBasicMaterial({
+			map : this._discTexture,
+			side : THREE.DoubleSide,
+			shading : THREE.FlatShading,
+			alphaTest : 0.5,
+			color : common.colors.blue,
+			transparent : true,
+			// transparent : true,
+			// blending: "Additive"
+		});
+
+		this._highlightedDiscMaterial = new THREE.MeshBasicMaterial({
+			map : this._discTexture,
+			side : THREE.DoubleSide,
+			shading : THREE.FlatShading,
+			alphaTest : 0.5,
+			color : common.colors.green,
+			transparent : true,
+			// transparent : true,
+			// blending: "Additive"
+		});
+
 		this.id = THREE.Object3DIdCount++;
 		this.uuid = THREE.Math.generateUUID();
 
@@ -11,11 +46,13 @@ define(['jquery', 'applib/common', 'lib/three'], function($, common) {"use stric
 
 		var planeGeometry = new THREE.PlaneGeometry(20, 20);
 
-		this._disc = new THREE.Mesh(planeGeometry, Hardpoint._baseDiscMaterial);
+		this._disc = new THREE.Mesh(planeGeometry, this._baseDiscMaterial);
 		this._disc.position.z = 0.1;
 		this.add(this._disc);
 
-		var chunkyArrowX = this._chunkyArrow(15, 2.5, 0.4, 1.5, 6, common.materials.blueMaterial);
+		var materials = new common.materials();
+
+		var chunkyArrowX = this._chunkyArrow(15, 2.5, 0.4, 1.5, 6, materials.blueMaterial);
 
 		chunkyArrowX.rotation.x = 0.5 * Math.PI;
 
@@ -60,50 +97,6 @@ define(['jquery', 'applib/common', 'lib/three'], function($, common) {"use stric
 
 	Hardpoint._discImage = "img/greeblz-disc.png";
 
-	Hardpoint._discTexture = THREE.ImageUtils.loadTexture(Hardpoint._discImage);
-
-	Hardpoint._baseDiscMaterial = function() {
-
-		return new THREE.MeshBasicMaterial({
-			map : Hardpoint._discTexture,
-			side : THREE.DoubleSide,
-			shading : THREE.FlatShading,
-			alphaTest : 0.5,
-			color : common.colors.white,
-			transparent : true,
-			// transparent : true,
-			// blending: "Additive"
-		});
-	}.call();
-
-	Hardpoint._selectedDiscMaterial = function() {
-
-		return new THREE.MeshBasicMaterial({
-			map : Hardpoint._discTexture,
-			side : THREE.DoubleSide,
-			shading : THREE.FlatShading,
-			alphaTest : 0.5,
-			color : common.colors.blue,
-			transparent : true,
-			// transparent : true,
-			// blending: "Additive"
-		});
-	}.call();
-
-	Hardpoint._highlightedDiscMaterial = function() {
-
-		return new THREE.MeshBasicMaterial({
-			map : Hardpoint._discTexture,
-			side : THREE.DoubleSide,
-			shading : THREE.FlatShading,
-			alphaTest : 0.5,
-			color : common.colors.green,
-			transparent : true,
-			// transparent : true,
-			// blending: "Additive"
-		});
-	}.call();
-
 	Hardpoint.prototype = new THREE.Object3D();
 
 	Hardpoint.prototype.constructor = Hardpoint;
@@ -132,11 +125,11 @@ define(['jquery', 'applib/common', 'lib/three'], function($, common) {"use stric
 	};
 
 	Hardpoint.prototype.highlight = function() {
-		this._disc.material = Hardpoint._highlightedDiscMaterial;
+		this._disc.material = this._highlightedDiscMaterial;
 	};
 
 	Hardpoint.prototype.select = function() {
-		this._disc.material = Hardpoint._selectedDiscMaterial;
+		this._disc.material = this._selectedDiscMaterial;
 	};
 
 	return Hardpoint;
