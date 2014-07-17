@@ -56,10 +56,22 @@ define(["lib/three"], function() {"use strict";
 		};
 	}
 
+	/**
+	 * Assign prototype without calling constructor
+	 * @param {Object} o The object whose prototype you want to inherit
+	 */
+	function inherit(o) {
+		function F() {
+		};// Dummy constructor
+		F.prototype = o;
+		return new F();
+	}
+
 	return {
 		colors : Colors,
 		materials : Materials,
 		windowResize : WindowResize,
+		inherit : inherit
 	};
 
 });
