@@ -164,199 +164,149 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 
 	};
 
-	GreeblzScene.prototype.defaultOptions = function() {
-		return {
-			pubSub : null,
-			topic : null,
-			skybox : true,
-			clearColor : 0x000000,
-			clearAlpha : 1.0
-		};
-	};
+	GreeblzScene.prototype = {
 
-	GreeblzScene.prototype._handleMouseDown = function(event) {
-		// Because we are using the transform tools
-		// we only want to perform a pick if this is a
-		// 'click' without the mouse moving at all
-		this._mouseMoved = false;
-		this._mouseDown = true;
-	};
+		defaultOptions : function() {
+			return {
+				pubSub : null,
+				topic : null,
+				skybox : true,
+				clearColor : 0x000000,
+				clearAlpha : 1.0
+			};
+		},
 
-	GreeblzScene.prototype._handleMouseMove = function(event) {
-		// Because we are using the transform tools
-		// we only want to perform a pick if this is a
-		// 'click' without the mouse moving at all
-		this._mouseMoved = true;
-		// Mouse is moving in scene, but we're not triggering camera movement
-		if (!this._mouseDown) {
+		_handleMouseDown : function(event) {
+			// Because we are using the transform tools
+			// we only want to perform a pick if this is a
+			// 'click' without the mouse moving at all
+			this._mouseMoved = false;
+			this._mouseDown = true;
+		},
 
-		}
-	};
+		_handleMouseMove : function(event) {
+			// Because we are using the transform tools
+			// we only want to perform a pick if this is a
+			// 'click' without the mouse moving at all
+			this._mouseMoved = true;
+			// Mouse is moving in scene, but we're not triggering camera movement
+			if (!this._mouseDown) {
 
-	GreeblzScene.prototype._handleMouseEnter = function(event) {
-		// Because we are using the transform tools
-		// we only want to perform a pick if this is a
-		// 'click' without the mouse moving at all
-		this._hasMouse = true;
-	};
-
-	GreeblzScene.prototype._handleMouseLeave = function(event) {
-		// Because we are using the transform tools
-		// we only want to perform a pick if this is a
-		// 'click' without the mouse moving at all
-		this._hasMouse = false;
-	};
-
-	GreeblzScene.prototype._handleMouseUp = function(event) {
-		// Because we are using the transform tools
-		// we only want to perform a pick if this is a
-		// 'click' without the mouse moving at all
-		this._mouseDown = false;
-		if (this._pickEnabled && !this._mouseMoved) {
-			event.preventDefault();
-			var domElement = this._renderer.domElement;
-			var mouse = new THREE.Vector2();
-			var pos = $(domElement).position();
-			var relX = event.pageX - pos.left;
-			var relY = event.pageY - pos.top;
-			var mouseVector = new THREE.Vector3((relX / domElement.width ) * 2 - 1, -(relY / domElement.height ) * 2 + 1, 0);
-			// Fixup mouse vector relative to camera.
-			this._projector.unprojectVector(mouseVector, this._camera);
-			this._raycaster.set(this._camera.position, mouseVector.sub(this._camera.position).normalize());
-			var picked = this._raycaster.intersectObjects(this._pickableObjects, true);
-			// console.debug(picked);
-			if (picked.length > 0) {
-				console.debug("HIT!");
-				var pickInfo = picked[0];
-				var face = pickInfo.face.clone();
-				var normal = face.normal.clone();
-				var point = pickInfo.point.clone();
-				var object = pickInfo.object;
-				var hpWidget = new Hardpoint();
-				hpWidget.position = point;
-
-				// var m4 = new THREE.Matrix4();
-
-				// m4.lookAt(normal.negate(), point, this._camera.up);
-
-				// var matrixWorldInverse = new THREE.Matrix4();
-				// matrixWorldInverse.getInverse(object.matrixWorld);
-				// while (object.parent !== undefined) {
-				var normalMatrix = new THREE.Matrix3().getNormalMatrix(object.matrixWorld);
-				//object.localToWorld(normal);
-				// object = object.parent;
-				normal.applyMatrix3(normalMatrix).normalize();
-				// }
-
-				// object.localToWorld(normal);
-				// normal.normalize();
-
-				var dquat = new THREE.Quaternion();
-				dquat.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
-				//dquat.setFromRotationMatrix(m4);
-				hpWidget.setRotationFromQuaternion(dquat.normalize());
-				hpWidget.opacity = 0.65;
-				object.add(hpWidget);
-				hpWidget.rotation.z = 0;
-				this._scene.add(hpWidget);
 			}
-		}
-	};
+		},
 
-	GreeblzScene.prototype._handlePubsubMsg = function(msg) {
-		console.log("DERP");
-		console.log("DERP");
-		switch (msg.type) {
-			case "setRootModel":
-				this._setRootModel(msg.geometry, msg.pickable);
-				break;
-			default:
-				console.log("Unknown message:");
-				console.log(msg);
-		}
-	};
+		_handleMouseEnter : function(event) {
+			// Because we are using the transform tools
+			// we only want to perform a pick if this is a
+			// 'click' without the mouse moving at all
+			this._hasMouse = true;
+		},
 
-	GreeblzScene.prototype._setRootModel = function(geometry, pickable) {
-		var material = new THREE.MeshPhongMaterial({
-			ambient : 0xff5533,
-			color : 0xff5533,
-			specular : 0x111111,
-			shininess : 200
-		});
-		var model = new THREE.Mesh(geometry, material);
-		//model.scale.set(10, 10, 10);
-		this._scene.add(model);
-		if (pickable) {
-			this._pickableObjects.push(model);
-		}
-		//this._scene.add(model2);
+		_handleMouseLeave : function(event) {
+			// Because we are using the transform tools
+			// we only want to perform a pick if this is a
+			// 'click' without the mouse moving at all
+			this._hasMouse = false;
+		},
 
-		// console.log(model2);
-	};
+		_handleMouseUp : function(event) {
+		},
 
-	GreeblzScene.prototype._keyboardHandler = function(event) {
+		_handlePubsubMsg : function(msg) {
+			console.log("DERP");
+			console.log("DERP");
+			switch (msg.type) {
+				case "setRootModel":
+					this._setRootModel(msg.geometry, msg.pickable);
+					break;
+				default:
+					console.log("Unknown message:");
+					console.log(msg);
+			}
+		},
 
-		if (!this._hasMouse)
-			return;
+		_setRootModel : function(geometry, pickable) {
+			var material = new THREE.MeshPhongMaterial({
+				ambient : 0xff5533,
+				color : 0xff5533,
+				specular : 0x111111,
+				shininess : 200
+			});
+			var model = new THREE.Mesh(geometry, material);
+			//model.scale.set(10, 10, 10);
+			this._scene.add(model);
+			if (pickable) {
+				this._pickableObjects.push(model);
+			}
+			//this._scene.add(model2);
 
-		console.log("KEYBOARD EVENT");
-		console.log(event);
+			// console.log(model2);
+		},
 
-		// if (msg.type = "event") {
-		// var event = msg.event;
-		switch (event.keyCode) {
-			case 81:
-				// Q
-				// control.setSpace(control.space == "local" ? "world" : "local");
-				break;
-			case 87:
-				// W
-				// control.setMode("translate");
-				break;
-			case 69:
-				// E
-				// control.setMode("rotate");
-				break;
-			case 82:
-				// R
-				// control.setMode("scale");
-				break;
-			case 84:
-				// T Edit Mode
-				// control.setMode("scale");
-				this._orbitControls.enabled = !this._orbitControls.enabled;
-				break;
-			// case 187:
-			// case 107:
-			// // +,=,num+
-			// control.setSize(control.size + 0.1);
-			// break;
-			// case 189:
-			// case 10:
-			// // -,_,num-
-			// control.setSize(Math.max(control.size - 0.1, 0.1));
-			// break;
-		}
-		// }
-	};
+		_keyboardHandler : function(event) {
 
-	GreeblzScene.prototype.animate = function() {
-		var scope = this;
-		this._render();
-		this._update();
-		var fps = 30;
-		setTimeout(function() {
-			requestAnimationFrame(scope.animate.bind(scope));
-		}, 1000 / fps);
-	};
+			if (!this._hasMouse)
+				return;
 
-	GreeblzScene.prototype._update = function() {
-		this._orbitControls.update();
-		// stats.update();
-	};
+			console.log("KEYBOARD EVENT");
+			console.log(event);
 
-	GreeblzScene.prototype._render = function() {
-		this._renderer.render(this._scene, this._camera);
+			// if (msg.type = "event") {
+			// var event = msg.event;
+			switch (event.keyCode) {
+				case 81:
+					// Q
+					// control.setSpace(control.space == "local" ? "world" : "local");
+					break;
+				case 87:
+					// W
+					// control.setMode("translate");
+					break;
+				case 69:
+					// E
+					// control.setMode("rotate");
+					break;
+				case 82:
+					// R
+					// control.setMode("scale");
+					break;
+				case 84:
+					// T Edit Mode
+					// control.setMode("scale");
+					this._orbitControls.enabled = !this._orbitControls.enabled;
+					break;
+				// case 187:
+				// case 107:
+				// // +,=,num+
+				// control.setSize(control.size + 0.1);
+				// break;
+				// case 189:
+				// case 10:
+				// // -,_,num-
+				// control.setSize(Math.max(control.size - 0.1, 0.1));
+				// break;
+			}
+			// }
+		},
+
+		animate : function() {
+			var scope = this;
+			this._render();
+			this._update();
+			var fps = 30;
+			setTimeout(function() {
+				requestAnimationFrame(scope.animate.bind(scope));
+			}, 1000 / fps);
+		},
+
+		_update : function() {
+			this._orbitControls.update();
+			// stats.update();
+		},
+
+		_render : function() {
+			this._renderer.render(this._scene, this._camera);
+		},
 	};
 
 	return GreeblzScene;
