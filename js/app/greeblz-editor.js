@@ -1,4 +1,4 @@
-define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/pubsub', 'applib/stlstore', 'applib/command', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowResize', 'lib/OrbitControls', 'lib/TransformControls'], function($, Scene, common, Hardpoint, PubSub, StlStore, commands) {"use strict";
+define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/pubsub', 'applib/stlstore', 'applib/command', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowResize', 'lib/OrbitControls', 'lib/TransformControls'], function($, scene, common, Hardpoint, PubSub, StlStore, commands) {"use strict";
 
 	function GreeblzEditor() {
 
@@ -23,7 +23,7 @@ define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/p
 
 		var container = $('#main-view').get(0);
 
-		this._mainView = new Scene({
+		this._mainView = new scene.MainViewScene({
 			pubsub : this._pubsub,
 			topic : this._mainViewTopic,
 			container : container
@@ -31,60 +31,7 @@ define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/p
 
 		container = $('#part-view').get(0);
 
-		function PartViewScene(options) {
-			Scene.call(this, options);
-
-			this._pickWidget = new Hardpoint();
-			this._pickWidget.visible = false;
-			this._pickWidget.opacity = 0.65;
-			this._scene.add(this._pickWidget);
-		}
-
-
-		PartViewScene.prototype = common.inherit(Scene.prototype);
-
-		PartViewScene.prototype.constructor = PartViewScene;
-
-		PartViewScene.prototype._handleMouseUp = function(event) {
-			// Because we are using the transform tools
-			// we only want to perform a pick if this is a
-			// 'click' without the mouse moving at all
-			this._mouseDown = false;
-			if (this._pickEnabled && !this._mouseMoved) {
-				this._pickWidget.visible = true;
-				event.preventDefault();
-				var domElement = this._renderer.domElement;
-				var mouse = new THREE.Vector2();
-				var pos = $(domElement).position();
-				var relX = event.pageX - pos.left;
-				var relY = event.pageY - pos.top;
-				var mouseVector = new THREE.Vector3((relX / domElement.width ) * 2 - 1, -(relY / domElement.height ) * 2 + 1, 0);
-				// Fixup mouse vector relative to camera.
-				this._projector.unprojectVector(mouseVector, this._camera);
-				this._raycaster.set(this._camera.position, mouseVector.sub(this._camera.position).normalize());
-				var picked = this._raycaster.intersectObjects(this._pickableObjects, true);
-				// console.debug(picked);
-				if (picked.length > 0) {
-					console.debug("HIT!");
-					var pickInfo = picked[0];
-					var face = pickInfo.face.clone();
-					var normal = face.normal.clone();
-					var point = pickInfo.point.clone();
-					this._orbitControls.center=point;
-					var object = pickInfo.object;
-					this._pickWidget.position = point;
-					var normalMatrix = new THREE.Matrix3().getNormalMatrix(object.matrixWorld);
-					normal.applyMatrix3(normalMatrix).normalize();
-					var dquat = new THREE.Quaternion();
-					dquat.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
-					this._pickWidget.setRotationFromQuaternion(dquat.normalize());
-					//object.add(hpWidget);
-					this._pickWidget.rotation.z = 0;
-				}
-			}
-		};
-
-		this._partView = new PartViewScene({
+		this._partView = new scene.PartViewScene({
 			pubsub : this._pubsub,
 			topic : this._partViewTopic,
 			container : container,
@@ -121,7 +68,6 @@ define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/p
 			var url = msg.url;
 			var store = msg.store;
 			var geometry = store.retrieve(url);
-			console.log("DERP!!3333");
 			// var material = new THREE.MeshPhongMaterial({
 			// ambient : 0xff5533,
 			// color : 0xff5533,
@@ -150,7 +96,8 @@ define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/p
 			this._pubsub.publish(this._partViewTopic, {
 				type : "setRootModel",
 				geometry : geometry.clone(),
-				pickable : true
+				pickable : true,
+				centered : true,
 			});
 
 			this._pubsub.publish(this._mainViewTopic, {

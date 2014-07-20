@@ -217,7 +217,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			console.log("DERP");
 			switch (msg.type) {
 				case "setRootModel":
-					this._setRootModel(msg.geometry, msg.pickable);
+					this._setRootModel(msg.geometry, msg.pickable, msg.centered);
 					break;
 				default:
 					console.log("Unknown message:");
@@ -225,7 +225,13 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			}
 		},
 
-		_setRootModel : function(geometry, pickable) {
+		/**
+		 *
+		 * @param {Object} geometry
+		 * @param {Object} pickable
+		 * @param {Object} centerObject
+		 */
+		_setRootModel : function(geometry, pickable, centered) {
 			var material = new THREE.MeshPhongMaterial({
 				ambient : 0xff5533,
 				color : 0xff5533,
@@ -233,8 +239,16 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 				shininess : 200
 			});
 			var model = new THREE.Mesh(geometry, material);
-			//model.scale.set(10, 10, 10);
 			this._scene.add(model);
+			if (centered == true) {
+				geometry.computeBoundingSphere();
+				console.log(geometry.boundingSphere);
+				console.log(geometry.boundingSphere.center);
+				var dir = geometry.boundingSphere.center.clone().negate().normalize();
+				var distance = geometry.boundingSphere.center.clone().length();
+				model.translateOnAxis(dir, distance);
+			}
+			//model.scale.set(10, 10, 10);
 			if (pickable) {
 				this._pickableObjects.push(model);
 			}
@@ -309,6 +323,70 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		},
 	};
 
-	return GreeblzScene;
+	function PartViewScene(options) {
+		GreeblzScene.call(this, options);
+
+		this._pickWidget = new Hardpoint();
+		this._pickWidget.visible = false;
+		this._pickWidget.opacity = 0.65;
+		this._scene.add(this._pickWidget);
+	}
+
+
+	PartViewScene.prototype = common.inherit(GreeblzScene.prototype);
+
+	PartViewScene.prototype.constructor = PartViewScene;
+
+	PartViewScene.prototype._handleMouseUp = function(event) {
+		// Because we are using the transform tools
+		// we only want to perform a pick if this is a
+		// 'click' without the mouse moving at all
+		this._mouseDown = false;
+		if (this._pickEnabled && !this._mouseMoved) {
+			this._pickWidget.visible = true;
+			event.preventDefault();
+			var domElement = this._renderer.domElement;
+			var mouse = new THREE.Vector2();
+			var pos = $(domElement).position();
+			var relX = event.pageX - pos.left;
+			var relY = event.pageY - pos.top;
+			var mouseVector = new THREE.Vector3((relX / domElement.width ) * 2 - 1, -(relY / domElement.height ) * 2 + 1, 0);
+			// Fixup mouse vector relative to camera.
+			this._projector.unprojectVector(mouseVector, this._camera);
+			this._raycaster.set(this._camera.position, mouseVector.sub(this._camera.position).normalize());
+			var picked = this._raycaster.intersectObjects(this._pickableObjects, true);
+			// console.debug(picked);
+			if (picked.length > 0) {
+				console.debug("HIT!");
+				var pickInfo = picked[0];
+				var face = pickInfo.face.clone();
+				var normal = face.normal.clone();
+				var point = pickInfo.point.clone();
+				this._orbitControls.center = point;
+				var object = pickInfo.object;
+				this._pickWidget.position = point;
+				var normalMatrix = new THREE.Matrix3().getNormalMatrix(object.matrixWorld);
+				normal.applyMatrix3(normalMatrix).normalize();
+				var dquat = new THREE.Quaternion();
+				dquat.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+				this._pickWidget.setRotationFromQuaternion(dquat.normalize());
+				//object.add(hpWidget);
+				this._pickWidget.rotation.z = 0;
+			}
+		}
+	};
+
+	function MainViewScene(options) {
+		GreeblzScene.call(this, options);
+
+	}
+
+
+	MainViewScene.prototype = common.inherit(GreeblzScene.prototype);
+
+	return {
+		PartViewScene : PartViewScene,
+		MainViewScene : MainViewScene,
+	};
 
 });
