@@ -79,13 +79,17 @@ define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/p
 
 			switch (msg.type) {
 				case "mainViewPick":
-					console.debug("Main view pick");
-					this._pubsub.publish(this._mainViewTopic, {
-						type : scene.MainViewScene.mode.add,
-						geometry : this._currentPartViewGeometry.clone(),
-						point : msg.point,
-						normal : msg.normal
-					});
+					// TODO THIS IS WRONG!!!!
+					// Needs to be part view pick msg
+/*
+					// console.debug("Main view pick");
+					// this._pubsub.publish(this._mainViewTopic, {
+						// type : scene.MainViewScene.mode.add,
+						// geometry : this._currentPartViewGeometry.clone(),
+						// point : msg.point,
+						// normal : msg.normal
+					// });*/
+
 					break;
 
 			}
