@@ -42,14 +42,15 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		// CAMERA
 		var SCREEN_WIDTH = opts.container.clientWidth;
 		var SCREEN_HEIGHT = opts.container.clientHeight;
-		var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
+		this.VIEW_ANGLE = 45;
+		var ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
 
 		// Sertup Camera
-		this._camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
+		this._camera = new THREE.PerspectiveCamera(this.VIEW_ANGLE, ASPECT, NEAR, FAR);
 		//this._camera = new THREE.OrthographicCamera(-SCREEN_WIDTH/20,SCREEN_WIDTH/20,SCREEN_HEIGHT/20,-SCREEN_HEIGHT/20,0.1, 20000);
 		this._scene.add(this._camera);
-		this._camera.position.set(0, 150, 400);
-		this._camera.lookAt(this._scene.position);
+		this._camera.position.set(0, 0, 400);
+		this._camera.lookAt(new THREE.Vector3(0, 0, 0));
 		// Add camera light
 		var flashlight = new THREE.SpotLight(0xaaaaaa, 1, 0.0);
 		this._camera.add(flashlight);
@@ -214,8 +215,9 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		},
 
 		_handlePubsubMsg : function(msg) {
-			console.log("DERP");
-			console.log("DERP");
+			console.group("Handle scene topic " + this._topic);
+			console.debug(msg);
+			console.groupEnd();
 			switch (msg.type) {
 				case "setRootModel":
 					this._setRootModel(msg.geometry, msg.pickable, msg.centered);
@@ -241,21 +243,32 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			});
 			var model = new THREE.Mesh(geometry, material);
 			this._scene.add(model);
+			geometry.computeBoundingSphere();
 			if (centered == true) {
-				geometry.computeBoundingSphere();
-				console.log(geometry.boundingSphere);
-				console.log(geometry.boundingSphere.center);
 				var dir = geometry.boundingSphere.center.clone().negate().normalize();
 				var distance = geometry.boundingSphere.center.clone().length();
 				model.translateOnAxis(dir, distance);
 			}
-			//model.scale.set(10, 10, 10);
 			if (pickable) {
 				this._pickableObjects.push(model);
 			}
-			//this._scene.add(model2);
+			// Frame model
+			//var distance = geometry.boundingSphere.radius / (0.7 * (Math.tan(this.VIEW_ANGLE / 2.0)));
+			var distance = 1.2 * geometry.boundingSphere.radius / Math.sin(this.VIEW_ANGLE / 2.0);
+			var vec = this._camera.position.clone().sub(new THREE.Vector3(0, 0, 0)).normalize();
+			var position = vec.multiplyScalar(distance);
+			// console.group("DEBUG CAMERA POSITION");
+			// console.debug("camera position");
+			// console.debug(this._camera.position);
+			// console.debug("boundingSphere");
+			// console.debug(geometry.boundingSphere);
+			// console.debug("new distance");
+			// console.debug(distance);
+			// console.debug("new position");
+			// console.debug(position);
+			// console.groupEnd();
+			this._camera.position = position;
 
-			// console.log(model2);
 		},
 
 		_keyboardHandler : function(event) {
@@ -400,6 +413,16 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 
 	MainViewScene.prototype = common.inherit(GreeblzScene.prototype);
 
+	MainViewScene.prototype.constructor = GreeblzScene;
+
+	MainViewScene.prototype._handlePubsubMsg = function(msg) {
+		switch (msg.type) {
+			default:
+				console.log("Calling super...");
+				this.$super._handlePubsubMsg.call(this, msg);
+		}
+	};
+
 	MainViewScene.prototype._handleMouseUp = function(event) {
 		// Because we are using the transform tools
 		// we only want to perform a pick if this is a
@@ -432,7 +455,8 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 				//object.add(hpWidget);
 				this._pubsub.publish(this._appTopic, {
 					type : "mainViewPick",
-					point : object.worldToLocal(point.clone())
+					point : object.worldToLocal(point.clone()),
+					normal : normal.clone()
 				});
 			}
 		}
