@@ -76,6 +76,20 @@ define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/p
 			console.group("Topic: " + this._appTopic);
 			console.debug(msg);
 			console.groupEnd();
+
+			switch (msg.type) {
+				case "mainViewPick":
+					console.debug("Main view pick");
+					this._pubsub.publish(this._mainViewTopic, {
+						type : scene.MainViewScene.mode.add,
+						geometry : this._currentPartViewGeometry.clone(),
+						point : msg.point,
+						normal : msg.normal
+					});
+					break;
+
+			}
+
 		},
 
 		_addModelToScene : function(msg) {
@@ -119,7 +133,8 @@ define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/p
 				this._pubsub.publish(this._mainViewTopic, {
 					type : "setRootModel",
 					geometry : this._currentPartViewGeometry.clone(),
-					pickable : true
+					pickable : true,
+					centered : true,
 				});
 
 			} else {
