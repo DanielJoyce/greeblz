@@ -64,14 +64,15 @@ define(["lib/three"], function() {"use strict";
 		function F() {
 		};// Dummy constructor
 		F.prototype = o;
+		F.prototype.$super = o;
 		return new F();
-	}
+	}	
 
 	return {
 		colors : Colors,
 		materials : Materials,
 		windowResize : WindowResize,
-		inherit : inherit
+		inherit : inherit,
 	};
 
 });
