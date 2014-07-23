@@ -88,6 +88,13 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		this._light.position.set(0, 250, 0);
 		this._scene.add(this._light);
 
+		this._defaultMaterial = new THREE.MeshPhongMaterial({
+			ambient : 0xff5533,
+			color : 0xff5533,
+			specular : 0x111111,
+			shininess : 200
+		});
+
 		// var axes = new THREE.AxisHelper(1000);
 		// this._scene.add(axes);
 
@@ -235,13 +242,8 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		 * @param {Object} centerObject
 		 */
 		_setRootModel : function(geometry, pickable, centered) {
-			var material = new THREE.MeshPhongMaterial({
-				ambient : 0xff5533,
-				color : 0xff5533,
-				specular : 0x111111,
-				shininess : 200
-			});
-			var model = new THREE.Mesh(geometry, material);
+
+			var model = new THREE.Mesh(geometry, this._defaultMaterial);
 			this._scene.add(model);
 			geometry.computeBoundingSphere();
 			if (centered == true) {
@@ -388,7 +390,8 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 				this._pickWidget.rotation.z = 0;
 				this._pubsub.publish(this._appTopic, {
 					type : "partViewPick",
-					point : object.worldToLocal(point.clone())
+					point : object.worldToLocal(point.clone()),
+					normal : normal
 				});
 			}
 		}
@@ -417,6 +420,37 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 
 	MainViewScene.prototype._handlePubsubMsg = function(msg) {
 		switch (msg.type) {
+			case "ADD":
+				var res = $.grep(this._pickableObjects, function(o) {
+					return o.uuid == msg.parent.uuid;
+				});
+				if (res.length > 0) {
+					var target = res[0];
+					console.log("TARGET");
+					console.log(target);
+					var pNormal = msg.parent.normal;
+					var pPoint = msg.parent.point;
+					target.worldToLocal(pPoint);
+					var cNormal = msg.child.normal;
+					var cPoint = msg.child.point;
+					target.localToWorld(cPoint);
+					var cGeom = msg.child.geometry;
+					var cModel = new THREE.Mesh(cGeom, this._defaultMaterial);
+					var dquat = new THREE.Quaternion();
+
+					var cDir = cPoint.clone().negate().normalize();
+					var cDistance = cPoint.clone().negate().length();
+					cModel.translateOnAxis(cDir, cDistance);
+					
+					//dquat.setFromUnitVectors(cNormal, pNormal.negate());
+					//cModel.setRotationFromQuaternion(dquat.normalize());
+
+					cModel.position = pPoint;
+					this._scene.add(cModel);
+					//this._pickableObjects.push(cModel);
+
+				}
+				break;
 			default:
 				console.log("Calling super...");
 				this.$super._handlePubsubMsg.call(this, msg);
@@ -450,11 +484,10 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 				var object = pickInfo.object;
 				var normalMatrix = new THREE.Matrix3().getNormalMatrix(object.matrixWorld);
 				normal.applyMatrix3(normalMatrix).normalize();
-				var dquat = new THREE.Quaternion();
-				dquat.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
 				//object.add(hpWidget);
 				this._pubsub.publish(this._appTopic, {
 					type : "mainViewPick",
+					uuid : object.uuid,
 					point : object.worldToLocal(point.clone()),
 					normal : normal.clone()
 				});
