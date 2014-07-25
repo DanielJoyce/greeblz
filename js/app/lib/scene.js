@@ -430,20 +430,21 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 					console.log(target);
 					var pNormal = msg.parent.normal;
 					var pPoint = msg.parent.point;
-					target.worldToLocal(pPoint);
 					var cNormal = msg.child.normal;
 					var cPoint = msg.child.point;
-					target.localToWorld(cPoint);
 					var cGeom = msg.child.geometry;
 					var cModel = new THREE.Mesh(cGeom, this._defaultMaterial);
-					var dquat = new THREE.Quaternion();
 
 					var cDir = cPoint.clone().negate().normalize();
-					var cDistance = cPoint.clone().negate().length();
+					var cDistance = cPoint.clone().length();
 					cModel.translateOnAxis(cDir, cDistance);
-					
-					//dquat.setFromUnitVectors(cNormal, pNormal.negate());
-					//cModel.setRotationFromQuaternion(dquat.normalize());
+
+					var dquat = new THREE.Quaternion();					
+					dquat.setFromUnitVectors(cNormal, pNormal.negate());
+					cModel.setRotationFromQuaternion(dquat.normalize());
+
+					target.localToWorld(cPoint);
+					target.localToWorld(pPoint);					
 
 					cModel.position = pPoint;
 					this._scene.add(cModel);
