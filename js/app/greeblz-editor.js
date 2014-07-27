@@ -106,7 +106,6 @@ define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/p
 		},
 
 		_addModelToScene : function(msg) {
-			console.log("DERP!!111");
 			if (msg.type == "loaded") {
 				var url = msg.url;
 				var store = msg.store;
