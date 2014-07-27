@@ -434,61 +434,25 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 					});
 
 					var sphere = new THREE.Mesh(geometry, material);
-
 					var target = res[0];
-
 					var pNormal = msg.parent.normal;
 					var pPoint = msg.parent.point;
 					target.worldToLocal(pPoint);
 					var cNormal = msg.child.normal;
 					var cPoint = msg.child.point;
-					
 					var cGeom = msg.child.geometry;
-
-					//var sphere1 = sphere.clone();
-
-
 					var container = new THREE.Object3D();
 					container.position = pPoint;
 					target.add(container);
-
-
+					var dquat = new THREE.Quaternion();
+					dquat.setFromUnitVectors(cNormal.normalize(), pNormal.negate().normalize());
+					container.setRotationFromQuaternion(dquat.normalize());
 					var cModel = new THREE.Mesh(cGeom, this._defaultMaterial.clone());
 					var cDir = cPoint.clone().negate().normalize();
 					var cDistance = cPoint.clone().length();
-					console.log("CHILD MOVE");
-					console.log(cDir);
-					console.log(cDistance);
 					cModel.translateOnAxis(cDir, cDistance);
-					
 					container.add(cModel);
-					//var sphere1 = sphere.clone();
-					//container.add(sphere1);
-
-					// sphere1.position = pPoint;
-					//cModel.position = pPoint;
-
-					//var dquat = new THREE.Quaternion();
-
-					//dquat.setFromUnitVectors(cNormal.normalize(), pNormal.negate().normalize());
-					//container.setRotationFromQuaternion(dquat.normalize());
-
-					// var sphere2 = sphere.clone();
-					// sphere2.material = sphere2.material.clone();
-					// sphere2.material.color = 0x00ff00;
-					// sphere2.position = pPoint;
-
-					//var pDir = pPoint.clone().normalize();
-					//var pDistance = pPoint.clone().length();
-					//cModel.translateOnAxis(pDir, pDistance);
-
-					//target.material.opacity = 0.4;
-
-					//this._scene.add(sphere1);
-					//this._scene.add(cModel);
-					// this._scene.add(sphere2);
 					this._pickableObjects.push(cModel);
-
 				}
 				break;
 			default:
@@ -522,9 +486,6 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 				var normal = face.normal.clone();
 				var point = pickInfo.point.clone();
 				var object = pickInfo.object;
-				var normalMatrix = new THREE.Matrix3().getNormalMatrix(object.matrixWorld);
-				normal.applyMatrix3(normalMatrix).normalize();
-				//object.add(hpWidget);
 				this._pubsub.publish(this._appTopic, {
 					type : "mainViewPick",
 					uuid : object.uuid,
