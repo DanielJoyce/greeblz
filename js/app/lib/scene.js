@@ -249,7 +249,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			geometry.computeBoundingSphere();
 			if (centered == true) {
 				var dir = geometry.boundingSphere.center.clone().normalize();
-				var distance = - geometry.boundingSphere.radius;
+				var distance = -geometry.boundingSphere.radius;
 				model.translateOnAxis(dir, distance);
 			}
 			if (pickable) {
@@ -391,7 +391,8 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 				this._pickWidget.rotation.z = 0;
 				this._pubsub.publish(this._appTopic, {
 					type : "partViewPick",
-					point : object.localToWorld(point.clone()),
+					point : object.worldToLocal(point.clone()),
+					//point : point.clone()),
 					normal : normal.clone()
 				});
 			}
@@ -431,50 +432,61 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 					var material = new THREE.MeshBasicMaterial({
 						color : 0xff0000
 					});
+
 					var sphere = new THREE.Mesh(geometry, material);
 
 					var target = res[0];
+
 					var pNormal = msg.parent.normal;
 					var pPoint = msg.parent.point;
+					target.worldToLocal(pPoint);
 					var cNormal = msg.child.normal;
 					var cPoint = msg.child.point;
+					
 					var cGeom = msg.child.geometry;
 
-					var cModel = new THREE.Mesh(cGeom, this._defaultMaterial.clone());
+					//var sphere1 = sphere.clone();
 
-					var cDir = cPoint.clone().normalize();
-					var cDistance = cPoint.clone().negate().length();
-					console.log("DISTANCE");
+
+					var container = new THREE.Object3D();
+					container.position = pPoint;
+					target.add(container);
+
+
+					var cModel = new THREE.Mesh(cGeom, this._defaultMaterial.clone());
+					var cDir = cPoint.clone().negate().normalize();
+					var cDistance = cPoint.clone().length();
+					console.log("CHILD MOVE");
 					console.log(cDir);
 					console.log(cDistance);
-					
 					cModel.translateOnAxis(cDir, cDistance);
+					
+					container.add(cModel);
+					//var sphere1 = sphere.clone();
+					//container.add(sphere1);
 
-					var sphere1 = sphere.clone();
-					sphere1.position = cPoint;
-
-
-					var dquat = new THREE.Quaternion();
-
-					dquat.setFromUnitVectors(cNormal.normalize(), pNormal.negate().normalize());
-					cModel.setRotationFromQuaternion(dquat.normalize());
-
-					var sphere2 = sphere.clone();
-					sphere2.material = sphere2.material.clone();
-					sphere2.material.color = 0x00ff00;
-					sphere2.position = pPoint;
-
+					// sphere1.position = pPoint;
 					//cModel.position = pPoint;
+
+					//var dquat = new THREE.Quaternion();
+
+					//dquat.setFromUnitVectors(cNormal.normalize(), pNormal.negate().normalize());
+					//container.setRotationFromQuaternion(dquat.normalize());
+
+					// var sphere2 = sphere.clone();
+					// sphere2.material = sphere2.material.clone();
+					// sphere2.material.color = 0x00ff00;
+					// sphere2.position = pPoint;
+
 					//var pDir = pPoint.clone().normalize();
 					//var pDistance = pPoint.clone().length();
 					//cModel.translateOnAxis(pDir, pDistance);
-					
-					
-					cModel.material.opacity = 0.4;
 
-					this._scene.add(cModel);
-					this._scene.add(sphere1);
-					this._scene.add(sphere2);
+					//target.material.opacity = 0.4;
+
+					//this._scene.add(sphere1);
+					//this._scene.add(cModel);
+					// this._scene.add(sphere2);
 					this._pickableObjects.push(cModel);
 
 				}
@@ -516,7 +528,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 				this._pubsub.publish(this._appTopic, {
 					type : "mainViewPick",
 					uuid : object.uuid,
-					point : point.clone(),					
+					point : point.clone(),
 					normal : normal.clone()
 				});
 			}
