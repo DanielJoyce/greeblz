@@ -1,18 +1,13 @@
 define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/OrbitControls', 'lib/TransformControls'], function($, Hardpoint, common) {"use strict";
 
-	// var Mode = {};
-	//
-	// Mode.SELECT_HARDPOINT = "SELECT_HARDPOINT";
-	// Mode.MOVE_HARDPOINT = "MOVE_HARDPOINT";
-	// Mode.ORBIT = "ORBIT";
-	// Mode.PICK = "PICK";
-
 	function GreeblzScene(options) {
 
 		var opts = $.extend(true, {}, this.defaultOptions(), options);
 
 		// MAIN
 		// standard global variables
+
+		var materials = new common.materials();
 
 		this._scene = null;
 		this._camera = null;
@@ -52,7 +47,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		this._camera.position.set(0, 0, 400);
 		this._camera.lookAt(new THREE.Vector3(0, 0, 0));
 		// Add camera light
-		var flashlight = new THREE.SpotLight(0xaaaaaa, 1, 0.0);
+		var flashlight = new THREE.DirectionalLight(0xffffff);
 		this._camera.add(flashlight);
 		flashlight.position.set(0, 0, 1);
 
@@ -84,17 +79,11 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		// stats.domElement.style.zIndex = 100;
 		// container.appendChild( stats.domElement );
 		// LIGHT
-		this._light = new THREE.PointLight(0xffffff);
-		this._light.position.set(0, 250, 0);
+		this._light = new THREE.DirectionalLight(0xffffff);
+		this._light.position.set(0, 1, 0);
 		this._scene.add(this._light);
 
-		this._defaultMaterial = new THREE.MeshPhongMaterial({
-			ambient : 0xff5533,
-			color : 0xff5533,
-			specular : 0x111111,
-			shininess : 200,
-			transparent : true
-		});
+		this._defaultMaterial = materials.sprueGreyMaterial;
 
 		// var axes = new THREE.AxisHelper(1000);
 		// this._scene.add(axes);
@@ -130,47 +119,6 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		this._renderer.domElement.addEventListener("mouseup", this._handleMouseUp.bind(this));
 		this._renderer.domElement.addEventListener("mouseenter", this._handleMouseEnter.bind(this));
 		this._renderer.domElement.addEventListener("mouseleave", this._handleMouseLeave.bind(this));
-
-		//		projector = new THREE.Projector();
-		//
-		//		// flashlight.target = ;
-		//		renderer.domElement.addEventListener('mousemove', onDocumentMouseMove,
-		//				false);
-		//		renderer.domElement.addEventListener('mousedown', onDocumentMouseDown,
-		//				false);
-		//		renderer.domElement.addEventListener('mouseup', onDocumentMouseUp,
-		//				false);
-		//
-		//		window.addEventListener('keypress', function(event) {
-		//			// console.log(event.which);
-		//			switch (event.keyCode) {
-		//			case 81: // Q
-		//				control.setSpace(control.space == "local" ? "world" : "local");
-		//				break;
-		//			case 87: // W
-		//				control.setMode("translate");
-		//				break;
-		//			case 69: // E
-		//				control.setMode("rotate");
-		//				break;
-		//			case 82: // R
-		//				control.setMode("scale");
-		//				break;
-		//			case 84: // T Edit Mode
-		//				// control.setMode("scale");
-		//				break;
-		//			case 187:
-		//			case 107: // +,=,num+
-		//				control.setSize(control.size + 0.1);
-		//				break;
-		//			case 189:
-		//			case 10: // -,_,num-
-		//				control.setSize(Math.max(control.size - 0.1, 0.1));
-		//				break;
-		//			}
-		//		});
-		// console.log("FINISHED INIT");
-		// };
 
 	};
 
@@ -256,20 +204,9 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 				this._pickableObjects.push(model);
 			}
 			// Frame model
-			//var distance = geometry.boundingSphere.radius / (0.7 * (Math.tan(this.VIEW_ANGLE / 2.0)));
 			var distance = 1.2 * geometry.boundingSphere.radius / Math.sin(this.VIEW_ANGLE / 2.0);
 			var vec = this._camera.position.clone().sub(new THREE.Vector3(0, 0, 0)).normalize();
 			var position = vec.multiplyScalar(distance);
-			// console.group("DEBUG CAMERA POSITION");
-			// console.debug("camera position");
-			// console.debug(this._camera.position);
-			// console.debug("boundingSphere");
-			// console.debug(geometry.boundingSphere);
-			// console.debug("new distance");
-			// console.debug(distance);
-			// console.debug("new position");
-			// console.debug(position);
-			// console.groupEnd();
 			this._camera.position = position;
 
 		},
@@ -407,6 +344,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 
 	MainViewScene.mode = {
 		add : "ADD",
+		select : "SELECT",
 		remove : "REMOVE",
 		copy : "COPY",
 		waggle : "WAGGLE",
@@ -428,12 +366,6 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 				});
 				if (res.length > 0) {
 
-					var geometry = new THREE.SphereGeometry(3, 16, 16);
-					var material = new THREE.MeshBasicMaterial({
-						color : 0xff0000
-					});
-
-					var sphere = new THREE.Mesh(geometry, material);
 					var target = res[0];
 					var pNormal = msg.parent.normal;
 					var pPoint = msg.parent.point;
@@ -447,6 +379,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 					var dquat = new THREE.Quaternion();
 					dquat.setFromUnitVectors(cNormal.normalize(), pNormal.negate().normalize());
 					container.setRotationFromQuaternion(dquat.normalize());
+					//container.rotation.z = 0;
 					var cModel = new THREE.Mesh(cGeom, this._defaultMaterial.clone());
 					var cDir = cPoint.clone().negate().normalize();
 					var cDistance = cPoint.clone().length();
