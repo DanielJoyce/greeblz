@@ -6,6 +6,8 @@ define(["lib/three"], function() {"use strict";
 	Colors.red = 0xc25079;
 	Colors.green = 0x79c250;
 	Colors.white = 0xdedede;
+	Colors.sprueGrey = 0x666666;
+	Colors.greenstuff = 0x0da624;
 
 	function Materials() {
 
@@ -31,6 +33,46 @@ define(["lib/three"], function() {"use strict";
 			color : Colors.green,
 			shading : THREE.FlatShading,
 			transparent : true
+		});
+
+		this.sprueGreyMaterial = new THREE.MeshPhongMaterial({
+			ambient : 0x000000,
+			color : Colors.sprueGrey,
+			specular : 0x101010,
+			shininess : 500,
+			transparent : true
+		});
+
+		this.greenstuffMaterial = new THREE.MeshPhongMaterial({
+			ambient : 0x000000,
+			color : Colors.greenstuff,
+			specular : 0x050500,
+			shininess : 500,
+			transparent : true
+		});
+
+		this.selectMaterial = this.greenMaterial.clone();
+
+		this.higlightMaterial = this.blueMaterial.clone();
+
+		this.simpleRedMaterial = new THREE.MeshBasicMaterial({
+			color : 0xff0000
+		});
+		
+		this.simpleBlueMaterial = new THREE.MeshBasicMaterial({
+			color : 0x0000ff
+		});
+		
+		this.simpleGreenMaterial = new THREE.MeshBasicMaterial({
+			color : 0x00ff00
+		});
+		
+		this.simpleYellowMaterial = new THREE.MeshBasicMaterial({
+			color : 0xffff00
+		});
+		
+		this.simpleOrangeMaterial = new THREE.MeshBasicMaterial({
+			color : 0xff8000
 		});
 
 	}
@@ -66,7 +108,7 @@ define(["lib/three"], function() {"use strict";
 		F.prototype = o;
 		F.prototype.$super = o;
 		return new F();
-	}	
+	}
 
 	return {
 		colors : Colors,
