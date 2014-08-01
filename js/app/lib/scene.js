@@ -338,6 +338,9 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 
 	function MainViewScene(options) {
 		GreeblzScene.call(this, options);
+		
+		this._selectedPickInfo = null;
+		
 
 	}
 
@@ -361,14 +364,12 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 	MainViewScene.prototype._handlePubsubMsg = function(msg) {
 		switch (msg.type) {
 			case "ADD":
-				var res = $.grep(this._pickableObjects, function(o) {
-					return o.uuid == msg.parent.uuid;
-				});
-				if (res.length > 0) {
-
-					var target = res[0];
-					var pNormal = msg.parent.normal;
-					var pPoint = msg.parent.point;
+				var selectedObj = this._selectedPickInfo.object;
+				if(msg.parent.uuid = selectedObj.uuid){
+					
+					var target = selectedObj;
+					var pNormal = this._selectedPickInfo.face.normal;
+					var pPoint = this._selectedPickInfo.point;
 					target.worldToLocal(pPoint);
 					var cNormal = msg.child.normal;
 					var cPoint = msg.child.point;
@@ -377,7 +378,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 					container.position = pPoint;
 					target.add(container);
 					var dquat = new THREE.Quaternion();
-					dquat.setFromUnitVectors(cNormal.normalize(), pNormal.negate().normalize());
+					dquat.setFromUnitVectors(cNormal.normalize(), pNormal.clone().negate().normalize());
 					container.setRotationFromQuaternion(dquat.normalize());
 					//container.rotation.z = 0;
 					var cModel = new THREE.Mesh(cGeom, this._defaultMaterial.clone());
@@ -386,6 +387,11 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 					cModel.translateOnAxis(cDir, cDistance);
 					container.add(cModel);
 					this._pickableObjects.push(cModel);
+				}else{
+					console.group("Bad ADD");
+					console.log("Current selected UUID "+ this._selectedPickInfo.object.uuid);
+					console.log("Got ADD Target UUID "+ msg.parent.uuid);
+					console.groupEnd();
 				}
 				break;
 			default:
@@ -413,17 +419,10 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			var picked = this._raycaster.intersectObjects(this._pickableObjects, true);
 			// console.debug(picked);
 			if (picked.length > 0) {
-				console.debug("HIT!");
-				var pickInfo = picked[0];
-				var face = pickInfo.face.clone();
-				var normal = face.normal.clone();
-				var point = pickInfo.point.clone();
-				var object = pickInfo.object;
+				this._selectedPickInfo = picked[0];
 				this._pubsub.publish(this._appTopic, {
-					type : "mainViewPick",
-					uuid : object.uuid,
-					point : point.clone(),
-					normal : normal.clone()
+					type : "mainViewSelected",
+					uuid : this._selectedPickInfo.object.uuid,
 				});
 			}
 		}

@@ -78,14 +78,12 @@ define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/p
 			console.groupEnd();
 
 			switch (msg.type) {
-				case "mainViewPick":
+				case "mainViewSelected":
 					if (this._currentPartSelection.pickPoint && this._currentPartSelection.pickNormal) {
 						this._pubsub.publish(this._mainViewTopic, {
 							type : scene.MainViewScene.mode.add,
 							parent : {
 								uuid : msg.uuid,
-								point : msg.point,
-								normal : msg.normal
 							},
 							child : {
 								geometry : this._currentPartSelection.geometry.clone(),
