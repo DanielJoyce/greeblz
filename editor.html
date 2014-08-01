@@ -14,29 +14,9 @@
 	<body>
 		<div id="header">
 			<span class="logo">Greeblz!</span>
-			<!--
-			<div id="toolbar">
-			<button>
-			Save
-			</button>
-			<button>
-			Undo
-			</button>
-			<button>
-			Clear
-			</button>
-			<div class="search">
-			<label for="search" ><span class="fa fa-lg fa-search"></span></label>
-			<input type="search" id="search"
-			name="search" />
-			</div>
-			</div>
-			-->
 		</div>
 		<div id="content">
-			<div id="main-view" class="paper">
-				
-			</div>
+			<div id="main-view" class="paper"></div>
 			<div id="side-board">
 				<div id="part-view" class="paper">
 
@@ -46,6 +26,29 @@
 					name="search" placeholder="Search parts..."/>
 				</div>
 			</div>
+			<div id="toolbar">
+				<button class="round green" title="Add Part">
+					<span class="fa fa-lg fa-plus"></span>
+				</button>
+				<button class="round green" title ="Copy Part">
+					<span class="fa fa-lg fa-copy"></span>
+				</button>
+				<button class="round green" title ="Cut Part">
+					<span class="fa fa-lg fa-cut"></span>
+				</button>
+				<button class="round red" title="Delete Part">
+					<span class="fa fa-lg fa-minus"></span>
+				</button>
+				<button class="round blue" title="Save Figure">
+					<span class="fa fa-lg fa-save"></span>
+				</button>
+				<button class="round blue" title="Settings">
+					<span class="fa fa-lg fa-cog"></span>
+				</button>
+				<button class="round red" title="Start Over">
+					<span class="fa fa-lg fa-trash-o"></span>
+				</button>
+			</div>
 		</div>
 		<div id="footer">
 			All content &copy; 3D-Miniatures.com 2014 &amp; Licensors
@@ -53,43 +56,33 @@
 
 		<script>
 			requirejs.config({
-				baseUrl : 'js',
-				paths : {
-					// Thirdparty libraries
-					lib : 'lib',
-					// Application code
-					app : 'app',
-					// Application libraries
-					applib : 'app/lib',
-					jquery : 'lib/jquery-2.1.1.min'
-				},
-				shim : {
-					'lib/STLLoader' : {
-						deps : ['lib/three']
-					},
-					'lib/OrbitControls' : {
-						deps : ['lib/three']
-					},
-					'lib/TransformControls' : {
-						deps : ['lib/three']
-					},
-					'lib/THREEx.KeyboardState' : {
-						deps : ['lib/three']
-					},
-					'lib/THREEx.FullScreen' : {
-						deps : ['lib/three']
-					},
-					'lib/THREEx.WindowResize' : {
-						deps : ['lib/three']
-					},
-					'lib/TypedGeometry' : {
-						deps : ['lib/three']
-					},
-				}
+			baseUrl:'js',paths: {
+			// Thirdparty libraries
+			lib:'lib',
+			// Application code
+			app:'app',
+			// Application libraries
+			applib:'app/lib',jquery:'lib/jquery-2.1.1.min'
+			},shim: {
+			'lib/STLLoader': {
+			deps:['lib/three']
+			},'lib/OrbitControls': {
+			deps:['lib/three']
+			},'lib/TransformControls': {
+			deps:['lib/three']
+			},'lib/THREEx.KeyboardState': {
+			deps:['lib/three']
+			},'lib/THREEx.FullScreen': {
+			deps:['lib/three']
+			},'lib/THREEx.WindowResize': {
+			deps:['lib/three']
+			},'lib/TypedGeometry': {
+			deps:['lib/three']
+			},
+			}
 			});
-
 			requirejs(['app/greeblz-editor'], function(editor) {
-				editor.main();
+			editor.main();
 			});
 		</script>
 

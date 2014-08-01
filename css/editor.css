@@ -1,5 +1,14 @@
 /* Layout */
 
+/*
+	Colors.blue = 0x5079c2;
+	Colors.red = 0xc25079;
+	Colors.green = 0x79c250;
+	Colors.white = 0xdedede;
+	Colors.sprueGrey = 0x666666;
+	Colors.greenstuff = 0x0da624;
+*/
+
 html {
 	min-height: 100%;
 	min-width: 100%;
@@ -27,6 +36,36 @@ body {
 	box-shadow: 0px 0px 10px #454545;
 }
 
+button.round {
+	width: 50px;
+	height: 50px;
+	border-radius: 25px;
+	background: #FFFFFF;
+	border: none;
+	transition: all 200ms linear;
+	box-shadow: 0px 0px 10px #454545;
+}
+
+button.round:hover {
+	border: 1px solid #454545;
+	box-shadow: 0px 0px 3px #454545; 
+}
+
+.red {
+	color: #FFFFFF !important;
+	background: #C25079 !important;
+}
+
+.green {
+	color: #FFFFFF !important;
+	background: #79C250 !important;
+}
+
+.blue {
+	color: #FFFFFF !important;
+	background: #5079C2 !important;
+}
+
 #header, #footer {
 	padding-left: 15px;
 	padding-right: 15px;
@@ -47,10 +86,15 @@ body {
 }
 
 #toolbar {
+	right: 350px;
+	padding-top: 50px;
+	padding-bottom: 50px;
+	position: absolute;
 	display: flex;
-	flex-flow: row;
-	justify-content: flex-end;
+	flex-flow: column;
+	justify-content: space-around;
 	align-items: center;
+	height: 100%;
 	pointer-events: auto;
 }
 
@@ -146,10 +190,6 @@ body {
 	align-items: center;
 }
 
-#toolbar > *:nth-child(1n+0) {
-	margin-left: 15px;
-}
-
 label::after {
 	content: ": "
 }
@@ -165,14 +205,6 @@ div.search {
 
 div.search > input[type='search'] {
 	width: 100%;
-}
-
-#toolbar {
-	background-color: rgba(255,255,255,0.6);
-	border: 1px solid #454545;
-	border-radius: 3px;
-	box-shadow: 0px 0px 3px #454545;
-	padding: 5px;
 }
 
 input, select, radio, textarea, button {
