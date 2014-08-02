@@ -30,6 +30,8 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		this._topic = opts.topic;
 		this._appTopic = opts.appTopic;
 
+		this._loader = new THREE.STLLoader();
+
 		// this._mode = Mode.ORBIT;
 
 		// SCENE
@@ -176,7 +178,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			console.groupEnd();
 			switch (msg.type) {
 				case "setRootModel":
-					this._setRootModel(msg.geometry, msg.pickable, msg.centered);
+					this._loadUrl(msg);
 					break;
 				default:
 					console.log("Unknown message:");
@@ -257,6 +259,38 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			// }
 		},
 
+		_loadUrl : function(msg) {
+			var url = msg.url;
+			var dataType = msg.dataType;
+			if (url == undefined || url == null) {
+				this._pubsub.publish(this._topic, {
+					type : "error",
+					msg : "No url specified"
+				});
+			} else {
+				// TODO Use webworker in future
+				try {
+					this._loader.load(msg.url, this._geometryLoadedCallback.bind(this, url));
+				} catch(err) {
+					this._pubsub.publish(this._topic, {
+						type : "error",
+						msg : "Loader encountered error",
+						exception : err,
+					});
+				}
+			}
+		},
+
+		_geometryLoadedCallback : function(url, geometry) {
+			//			console.debug("LOAD COMPLETE");
+			//			console.debug("TOPIC: " + this.storeLoadedTopic);
+			//			this._store[url] = geometry;
+			//
+			geometry.name = url;
+			this._setRootModel(geometry, true, true);
+
+		},
+
 		animate : function() {
 			var scope = this;
 			this._render();
@@ -328,6 +362,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 				this._pickWidget.rotation.z = 0;
 				this._pubsub.publish(this._appTopic, {
 					type : "partViewPick",
+					url : object.geometry.name,
 					point : object.worldToLocal(point.clone()),
 					//point : point.clone()),
 					normal : normal.clone()
@@ -338,9 +373,8 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 
 	function MainViewScene(options) {
 		GreeblzScene.call(this, options);
-		
+
 		this._selectedPickInfo = null;
-		
 
 	}
 
@@ -365,8 +399,8 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		switch (msg.type) {
 			case "ADD":
 				var selectedObj = this._selectedPickInfo.object;
-				if(msg.parent.uuid = selectedObj.uuid){
-					
+				if (msg.parent.uuid = selectedObj.uuid) {
+
 					var target = selectedObj;
 					var pNormal = this._selectedPickInfo.face.normal;
 					var pPoint = this._selectedPickInfo.point;
@@ -387,10 +421,10 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 					cModel.translateOnAxis(cDir, cDistance);
 					container.add(cModel);
 					this._pickableObjects.push(cModel);
-				}else{
+				} else {
 					console.group("Bad ADD");
-					console.log("Current selected UUID "+ this._selectedPickInfo.object.uuid);
-					console.log("Got ADD Target UUID "+ msg.parent.uuid);
+					console.log("Current selected UUID " + this._selectedPickInfo.object.uuid);
+					console.log("Got ADD Target UUID " + msg.parent.uuid);
 					console.groupEnd();
 				}
 				break;

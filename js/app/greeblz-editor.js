@@ -1,4 +1,4 @@
-define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/pubsub', 'applib/stlstore', 'applib/command', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowResize', 'lib/OrbitControls', 'lib/TransformControls'], function($, scene, common, Hardpoint, PubSub, StlStore, commands) {"use strict";
+define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/pubsub', 'applib/command', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowResize', 'lib/OrbitControls', 'lib/TransformControls'], function($, scene, common, Hardpoint, PubSub, commands) {"use strict";
 
 	function GreeblzEditor() {
 
@@ -7,15 +7,9 @@ define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/p
 
 		this._pubsub = new PubSub();
 
-		this._stlTopic = "stl_geometry";
-
 		var sceneKeyboardTopic = "sceneKeyboard";
 
 		var sceneMouseTopic = "sceneMouse";
-
-		this._stlStore = new StlStore(this._pubsub, this._stlTopic);
-
-		this._stlLoadedTopic = this._stlStore.storeLoadedTopic;
 
 		this._partViewTopic = "partview";
 
@@ -46,23 +40,19 @@ define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/p
 			skybox : false
 		});
 
-		//		this._partView._pickWidget
-
-		var stlFile = "dav/bottle.stl";
-
-		this._pubsub.subscribe(this._stlLoadedTopic, this._addModelToScene.bind(this));
-
 		this._pubsub.subscribe(this._appTopic, this._handleAppTopic.bind(this));
 
-		this._pubsub.publish(this._stlTopic, {
-			type : "load",
-			url : "dav/bottle.stl"
+		this._pubsub.publish(this._partViewTopic, {
+			type : "setRootModel",
+			url : "dav/bottle.stl",
+		});
+
+		this._pubsub.publish(this._mainViewTopic, {
+			type : "setRootModel",
+			url : "dav/bottle.stl",
 		});
 
 	};
-
-	// var loader = new THREE.STLLoader();
-	// loader.load("dav/bottle.stl", this._addModelToScene.bind(this));
 
 	GreeblzEditor.prototype = {
 
@@ -95,6 +85,7 @@ define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/p
 					break;
 
 				case "partViewPick":
+					this._currentPartSelection.url = msg.url;
 					this._currentPartSelection.pickPoint = msg.point;
 					this._currentPartSelection.pickNormal = msg.normal;
 					break;
@@ -105,22 +96,6 @@ define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/p
 
 		_addModelToScene : function(msg) {
 			if (msg.type == "loaded") {
-				var url = msg.url;
-				var store = msg.store;
-				this._currentPartSelection.geometry = store.retrieve(url);
-				this._pubsub.publish(this._partViewTopic, {
-					type : "setRootModel",
-					geometry : this._currentPartSelection.geometry.clone(),
-					pickable : true,
-					centered : true,
-				});
-
-				this._pubsub.publish(this._mainViewTopic, {
-					type : "setRootModel",
-					geometry : this._currentPartSelection.geometry.clone(),
-					pickable : true,
-					centered : true,
-				});
 
 			} else {
 				console.warn("Load failed?");
