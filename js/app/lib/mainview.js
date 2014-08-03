@@ -5,6 +5,8 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 
 		this._selectedPickInfo = null;
 
+		this._currentMode = MainViewScene.mode.normal;
+
 	}
 
 
@@ -18,6 +20,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		shift : "SHIFT",
 		push : "PUSH",
 		scale : "SCALE",
+		normal : "NORMAL"
 	};
 
 	MainViewScene.prototype = common.inherit(GreeblzScene.prototype);
@@ -25,13 +28,21 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	MainViewScene.prototype.constructor = GreeblzScene;
 
 	MainViewScene.prototype._handlePubsubMsg = function(msg) {
-		switch (msg.type) {
-			case "ADD":
-				this._loadUrl(msg.child.url, this._addChildCallback.bind(this, msg));
-				break;
-			default:
-				console.log("Calling super...");
-				this.$super._handlePubsubMsg.call(this, msg);
+		try {
+			switch (msg.type) {
+				case "ADD":
+					this._currentMode = MainViewScene.mode.add;
+					this._loadUrl(msg.child.url, this._addChildCallback.bind(this, msg));
+					break;
+				default:
+					console.log("Calling super...");
+					this.$super._handlePubsubMsg.call(this, msg);
+			}
+		} catch (e) {
+			console.error("Encountered exception while handling message");
+			console.error(e);
+		} finally {
+			this._currentMode = MainViewScene.mode.normal;
 		}
 	};
 
@@ -64,7 +75,6 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	};
 
 	MainViewScene.prototype._addChildCallback = function(msg, url, geometry) {
-
 		var selectedObj = this._selectedPickInfo.object;
 		if (msg.parent.uuid === selectedObj.uuid) {
 
