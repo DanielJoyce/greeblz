@@ -21,31 +21,34 @@
 				<div id="part-view" class="paper">
 
 				</div>
-				<div class="search">
+				<div class="paper" id="search-panel">
 					<input type="search" id="search"
 					name="search" placeholder="Search parts..."/>
+					<div id="search-results">
+						<a href="dav/bottle.stl">bottle</a>
+					</div>
 				</div>
 			</div>
 			<div id="toolbar">
-				<button class="round green" title="Add Part">
+				<button class="round green" title="Add Part" id="addPart">
 					<span class="fa fa-lg fa-plus"></span>
 				</button>
-				<button class="round green" title ="Copy Part">
+				<button class="round green" title ="Copy Part" id="copyPart">
 					<span class="fa fa-lg fa-copy"></span>
 				</button>
-				<button class="round green" title ="Cut Part">
+				<button class="round green" title ="Cut Part" id="cutPart">
 					<span class="fa fa-lg fa-cut"></span>
 				</button>
-				<button class="round red" title="Delete Part">
+				<button class="round red" title="Remove Part" id="removePart">
 					<span class="fa fa-lg fa-minus"></span>
 				</button>
-				<button class="round blue" title="Save Figure">
+				<button class="round blue" title="Save Figure" id="saveFigure">
 					<span class="fa fa-lg fa-save"></span>
 				</button>
-				<button class="round blue" title="Settings">
+				<button class="round blue" title="Settings" id="settings">
 					<span class="fa fa-lg fa-cog"></span>
 				</button>
-				<button class="round red" title="Start Over">
+				<button class="round red" title="Start Over" id="trashFigure">
 					<span class="fa fa-lg fa-trash-o"></span>
 				</button>
 			</div>

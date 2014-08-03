@@ -74,6 +74,35 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		}
 	};
 
+	/**
+	 *
+	 * @param {Object} geometry
+	 * @param {Object} pickable
+	 * @param {Object} centerObject
+	 */
+	MainViewScene.prototype._setRootModel = function(geometry, pickable, centered) {
+
+		console.log("OVERIDDEN");
+		if (this._pickableObjects.length == 0) {
+			var model = new THREE.Mesh(geometry, this._defaultMaterial);
+			this._scene.add(model);
+			geometry.computeBoundingSphere();
+			if (centered == true) {
+				var dir = geometry.boundingSphere.center.clone().normalize();
+				var distance = -geometry.boundingSphere.radius;
+				model.translateOnAxis(dir, distance);
+			}
+			if (pickable) {
+				this._pickableObjects.push(model);
+			}
+			// Frame model
+			var distance = 1.2 * geometry.boundingSphere.radius / Math.sin(this.VIEW_ANGLE / 2.0);
+			var vec = this._camera.position.clone().sub(new THREE.Vector3(0, 0, 0)).normalize();
+			var position = vec.multiplyScalar(distance);
+			this._camera.position = position;
+		}
+	};
+
 	MainViewScene.prototype._addChildCallback = function(msg, url, geometry) {
 		var selectedObj = this._selectedPickInfo.object;
 		if (msg.parent.uuid === selectedObj.uuid) {

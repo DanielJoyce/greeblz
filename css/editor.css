@@ -145,6 +145,32 @@ button.round:hover {
 	/*border-radius: 5px;*/
 }
 
+#search-panel {
+	margin-top: 5px;
+	display: flex;
+	height: 100%;
+	flex-flow: column;
+    justify-content: flex-start;
+	flex: 1 0;
+}
+
+#search-results {
+	display: flex;
+	flex-flow: column;
+    justify-content: flex-start;
+	flex: 1 0;
+	overflow-y: scroll;
+}
+
+#search-results > a {
+	display: flex;
+	flex: 0 0 30px;
+	box-sizing: border-box;
+	border: 3px solid #FFFFFF;
+	box-shadow: 0px 0px 10px #454545;
+	margin: 1px 10px 1px 10px;
+}
+
 #main-view.paper > canvas {
 	width: 100%;
 	height: 100%;
@@ -198,13 +224,11 @@ label::after {
 	background-image: linear-gradient(#f7f7f7,#bbb);
 }
 
-div.search {
-	background-color: #ffffff;
-	padding: 5px;
-}
-
-div.search > input[type='search'] {
+#search-panel > input[type='search'] {
+	display: flex;
+	flex: 0,0;
 	width: 100%;
+	margin-bottom: 5px;
 }
 
 input, select, radio, textarea, button {

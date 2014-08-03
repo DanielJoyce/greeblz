@@ -1,6 +1,16 @@
 define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib/hardpoint', 'applib/pubsub', 'applib/command', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowResize', 'lib/OrbitControls', 'lib/TransformControls'], function($, MainViewScene, PartViewScene, common, Hardpoint, PubSub, commands) {"use strict";
 	function GreeblzEditor() {
 
+		$("#addPart").click(this._buttonHandler);
+		$("#cutPart").click(this._buttonHandler);
+		$("#copyPart").click(this._buttonHandler);
+		$("#removePart").click(this._buttonHandler);
+		$("#saveFigure").click(this._buttonHandler);
+		$("#settings").click(this._buttonHandler);
+		$("#trashFigure").click(this._buttonHandler);
+
+		$("#search-results > a").click(this._searchResultClickHandler.bind(this));
+
 		// Queue for undo/redo support
 		this._commandQueue = new Array(100);
 
@@ -41,16 +51,6 @@ define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib
 
 		this._pubsub.subscribe(this._appTopic, this._handleAppTopic.bind(this));
 
-		this._pubsub.publish(this._partViewTopic, {
-			type : "setRootModel",
-			url : "dav/bottle.stl",
-		});
-
-		this._pubsub.publish(this._mainViewTopic, {
-			type : "setRootModel",
-			url : "dav/bottle.stl",
-		});
-
 	};
 
 	GreeblzEditor.prototype = {
@@ -75,7 +75,7 @@ define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib
 								uuid : msg.uuid,
 							},
 							child : {
-								url: this._currentPartSelection.url,
+								url : this._currentPartSelection.url,
 								point : this._currentPartSelection.pickPoint.clone(),
 								normal : this._currentPartSelection.pickNormal.clone()
 							}
@@ -101,6 +101,25 @@ define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib
 				console.warn(msg);
 			}
 		},
+
+		_buttonHandler : function(event) {
+			alert("Button Clicked");
+		},
+
+		_searchResultClickHandler : function(event) {
+
+			event.preventDefault();
+			this._pubsub.publish(this._partViewTopic, {
+				type : "setRootModel",
+				url : "dav/bottle.stl",
+			});
+
+			this._pubsub.publish(this._mainViewTopic, {
+				type : "setRootModel",
+				url : "dav/bottle.stl",
+			});
+
+		}
 	};
 
 	return new GreeblzEditor();
