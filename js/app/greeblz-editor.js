@@ -1,5 +1,4 @@
-define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/pubsub', 'applib/command', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowResize', 'lib/OrbitControls', 'lib/TransformControls'], function($, scene, common, Hardpoint, PubSub, commands) {"use strict";
-
+define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib/hardpoint', 'applib/pubsub', 'applib/command', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowResize', 'lib/OrbitControls', 'lib/TransformControls'], function($, MainViewScene, PartViewScene, common, Hardpoint, PubSub, commands) {"use strict";
 	function GreeblzEditor() {
 
 		// Queue for undo/redo support
@@ -21,7 +20,7 @@ define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/p
 
 		this._currentPartSelection = {};
 
-		this._mainView = new scene.MainViewScene({
+		this._mainView = new MainViewScene({
 			pubsub : this._pubsub,
 			topic : this._mainViewTopic,
 			appTopic : this._appTopic,
@@ -30,7 +29,7 @@ define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/p
 
 		container = $('#part-view').get(0);
 
-		this._partView = new scene.PartViewScene({
+		this._partView = new PartViewScene({
 			pubsub : this._pubsub,
 			topic : this._partViewTopic,
 			appTopic : this._appTopic,
@@ -71,7 +70,7 @@ define(['jquery', 'applib/scene', 'applib/common', 'applib/hardpoint', 'applib/p
 				case "mainViewSelected":
 					if (this._currentPartSelection.pickPoint && this._currentPartSelection.pickNormal) {
 						this._pubsub.publish(this._mainViewTopic, {
-							type : scene.MainViewScene.mode.add,
+							type : MainViewScene.mode.add,
 							parent : {
 								uuid : msg.uuid,
 							},
