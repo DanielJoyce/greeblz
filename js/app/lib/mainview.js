@@ -27,35 +27,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	MainViewScene.prototype._handlePubsubMsg = function(msg) {
 		switch (msg.type) {
 			case "ADD":
-				var selectedObj = this._selectedPickInfo.object;
-				if (msg.parent.uuid = selectedObj.uuid) {
-
-					var target = selectedObj;
-					var pNormal = this._selectedPickInfo.face.normal;
-					var pPoint = this._selectedPickInfo.point;
-					target.worldToLocal(pPoint);
-					var cNormal = msg.child.normal;
-					var cPoint = msg.child.point;
-					var cGeom = msg.child.geometry;
-					var container = new THREE.Object3D();
-					container.position = pPoint;
-					target.add(container);
-					var dquat = new THREE.Quaternion();
-					dquat.setFromUnitVectors(cNormal.normalize(), pNormal.clone().negate().normalize());
-					container.setRotationFromQuaternion(dquat.normalize());
-					//container.rotation.z = 0;
-					var cModel = new THREE.Mesh(cGeom, this._defaultMaterial.clone());
-					var cDir = cPoint.clone().negate().normalize();
-					var cDistance = cPoint.clone().length();
-					cModel.translateOnAxis(cDir, cDistance);
-					container.add(cModel);
-					this._pickableObjects.push(cModel);
-				} else {
-					console.group("Bad ADD");
-					console.log("Current selected UUID " + this._selectedPickInfo.object.uuid);
-					console.log("Got ADD Target UUID " + msg.parent.uuid);
-					console.groupEnd();
-				}
+				this._loadUrl(msg.child.url, this._addChildCallback.bind(this, msg));
 				break;
 			default:
 				console.log("Calling super...");
@@ -89,6 +61,41 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 				});
 			}
 		}
+	};
+
+	MainViewScene.prototype._addChildCallback = function(msg, url, geometry) {
+
+		var selectedObj = this._selectedPickInfo.object;
+		if (msg.parent.uuid === selectedObj.uuid) {
+
+			var target = selectedObj;
+			var pNormal = this._selectedPickInfo.face.normal;
+			var pPoint = this._selectedPickInfo.point;
+			target.worldToLocal(pPoint);
+			var cNormal = msg.child.normal;
+			var cPoint = msg.child.point;
+			var cGeom = geometry;
+			cGeom.name = url;
+			var container = new THREE.Object3D();
+			container.position = pPoint;
+			target.add(container);
+			var dquat = new THREE.Quaternion();
+			dquat.setFromUnitVectors(cNormal.normalize(), pNormal.clone().negate().normalize());
+			container.setRotationFromQuaternion(dquat.normalize());
+			//container.rotation.z = 0;
+			var cModel = new THREE.Mesh(cGeom, this._defaultMaterial.clone());
+			var cDir = cPoint.clone().negate().normalize();
+			var cDistance = cPoint.clone().length();
+			cModel.translateOnAxis(cDir, cDistance);
+			container.add(cModel);
+			this._pickableObjects.push(cModel);
+		} else {
+			console.group("Bad ADD");
+			console.log("Current selected UUID " + this._selectedPickInfo.object.uuid);
+			console.log("Got ADD Target UUID " + msg.parent.uuid);
+			console.groupEnd();
+		}
+
 	};
 
 	return MainViewScene;

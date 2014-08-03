@@ -178,7 +178,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			console.groupEnd();
 			switch (msg.type) {
 				case "setRootModel":
-					this._loadUrl(msg);
+					this._loadUrl(msg.url, this._geometryLoadedSetRootModelCallback);
 					break;
 				default:
 					console.log("Unknown message:");
@@ -259,9 +259,8 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			// }
 		},
 
-		_loadUrl : function(msg) {
-			var url = msg.url;
-			var dataType = msg.dataType;
+		_loadUrl : function(url, callback) {
+			//var dataType = msg.dataType;
 			if (url == undefined || url == null) {
 				this._pubsub.publish(this._topic, {
 					type : "error",
@@ -270,7 +269,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			} else {
 				// TODO Use webworker in future
 				try {
-					this._loader.load(msg.url, this._geometryLoadedCallback.bind(this, url));
+					this._loader.load(url, callback.bind(this, url));
 				} catch(err) {
 					this._pubsub.publish(this._topic, {
 						type : "error",
@@ -281,7 +280,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			}
 		},
 
-		_geometryLoadedCallback : function(url, geometry) {
+		_geometryLoadedSetRootModelCallback : function(url, geometry) {
 			//			console.debug("LOAD COMPLETE");
 			//			console.debug("TOPIC: " + this.storeLoadedTopic);
 			//			this._store[url] = geometry;

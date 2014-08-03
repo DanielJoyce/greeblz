@@ -75,7 +75,7 @@ define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib
 								uuid : msg.uuid,
 							},
 							child : {
-								geometry : this._currentPartSelection.geometry.clone(),
+								url: this._currentPartSelection.url,
 								point : this._currentPartSelection.pickPoint.clone(),
 								normal : this._currentPartSelection.pickNormal.clone()
 							}
