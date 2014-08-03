@@ -2,6 +2,8 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 
 	function GreeblzScene(options) {
 
+		this._rootModel = null;
+
 		var opts = $.extend(true, {}, this.defaultOptions(), options);
 
 		// MAIN
@@ -193,6 +195,10 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		 * @param {Object} centerObject
 		 */
 		_setRootModel : function(geometry, pickable, centered) {
+
+			if (this._rootModel) {
+				this._scene.remove(this._rootModel);
+			}
 
 			var model = new THREE.Mesh(geometry, this._defaultMaterial);
 			this._scene.add(model);

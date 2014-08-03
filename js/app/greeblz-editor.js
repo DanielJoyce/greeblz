@@ -7,7 +7,7 @@ define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib
 		$("#removePart").click(this._buttonHandler);
 		$("#saveFigure").click(this._buttonHandler);
 		$("#settings").click(this._buttonHandler);
-		$("#trashFigure").click(this._buttonHandler);
+		$("#trashFigure").click(this._trashFigureHandler.bind(this));
 
 		$("#search-results > a").click(this._searchResultClickHandler.bind(this));
 
@@ -104,6 +104,12 @@ define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib
 
 		_buttonHandler : function(event) {
 			alert("Button Clicked");
+		},
+
+		_trashFigureHandler : function(event) {
+			this._pubsub.publish(this._mainViewTopic, {
+				type : MainViewScene.mode.reset
+			});
 		},
 
 		_searchResultClickHandler : function(event) {

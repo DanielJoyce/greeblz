@@ -20,7 +20,8 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		shift : "SHIFT",
 		push : "PUSH",
 		scale : "SCALE",
-		normal : "NORMAL"
+		normal : "NORMAL",
+		reset : "RESET"
 	};
 
 	MainViewScene.prototype = common.inherit(GreeblzScene.prototype);
@@ -30,10 +31,14 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	MainViewScene.prototype._handlePubsubMsg = function(msg) {
 		try {
 			switch (msg.type) {
-				case "ADD":
+				case MainViewScene.mode.add:
 					this._currentMode = MainViewScene.mode.add;
 					this._loadUrl(msg.child.url, this._addChildCallback.bind(this, msg));
 					break;
+				case MainViewScene.mode.reset:
+					this._currentMode = MainViewScene.mode.reset;
+					this._reset();
+
 				default:
 					console.log("Calling super...");
 					this.$super._handlePubsubMsg.call(this, msg);
@@ -44,6 +49,16 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		} finally {
 			this._currentMode = MainViewScene.mode.normal;
 		}
+	};
+
+	MainViewScene.prototype._reset = function() {
+		this._pickableObjects = [];
+		if (this._rootModel) {
+			this._scene.remove(this._rootModel);
+		}
+		this._rootModel = null;
+		this._currentMode = MainViewScene.mode.normal;
+		this._selectedPickInfo = {};
 	};
 
 	MainViewScene.prototype._handleMouseUp = function(event) {
@@ -81,10 +96,9 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	 * @param {Object} centerObject
 	 */
 	MainViewScene.prototype._setRootModel = function(geometry, pickable, centered) {
-
-		console.log("OVERIDDEN");
-		if (this._pickableObjects.length == 0) {
+		if (this._rootModel == null) {
 			var model = new THREE.Mesh(geometry, this._defaultMaterial);
+			this._rootModel = model;
 			this._scene.add(model);
 			geometry.computeBoundingSphere();
 			if (centered == true) {
@@ -100,6 +114,8 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 			var vec = this._camera.position.clone().sub(new THREE.Vector3(0, 0, 0)).normalize();
 			var position = vec.multiplyScalar(distance);
 			this._camera.position = position;
+		} else {
+			console.log("Root model already set, ignoring");
 		}
 	};
 
