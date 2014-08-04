@@ -5,8 +5,8 @@ define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib
 		$("#cutPart").click(this._buttonHandler);
 		$("#copyPart").click(this._buttonHandler);
 		$("#removePart").click(this._buttonHandler);
-		$("#saveFigure").click(this._buttonHandler);
-		$("#settings").click(this._buttonHandler);
+		$("#saveFigure").click(this._saveFigureHandler.bind(this));
+		$("#settings").click(this._settingsHandler.bind(this));
 		$("#trashFigure").click(this._trashFigureHandler.bind(this));
 
 		$("#search-results > a").click(this._searchResultClickHandler.bind(this));
@@ -106,23 +106,37 @@ define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib
 			alert("Button Clicked");
 		},
 
+		_saveFigureHandler : function(event) {
+			alert("Not implemented yet!");
+		},
+		
+		_settingsHandler : function(event) {
+			alert("Not implemented yet!");
+		},
+		
 		_trashFigureHandler : function(event) {
-			this._pubsub.publish(this._mainViewTopic, {
-				type : MainViewScene.mode.reset
-			});
+			if (confirm("Delete all work and start over?\nEverything will be lost unless saved!")) {
+				this._pubsub.publish(this._mainViewTopic, {
+					type : MainViewScene.mode.reset
+				});
+			}
 		},
 
 		_searchResultClickHandler : function(event) {
 
+			console.log(event);
+
+			var url = event.target.href;
+
 			event.preventDefault();
 			this._pubsub.publish(this._partViewTopic, {
 				type : "setRootModel",
-				url : "dav/bottle.stl",
+				url : url,
 			});
 
 			this._pubsub.publish(this._mainViewTopic, {
 				type : "setRootModel",
-				url : "dav/bottle.stl",
+				url : url,
 			});
 
 		}
