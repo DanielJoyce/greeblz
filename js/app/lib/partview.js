@@ -35,6 +35,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'applib/scene'], function
 			// console.debug(picked);
 			if (picked.length > 0) {
 				console.debug("HIT!");
+				console.log(picked);
 				var pickInfo = picked[0];
 				var face = pickInfo.face.clone();
 				var normal = face.normal.clone();

@@ -188,6 +188,15 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			}
 		},
 
+		_centerModel : function(model) {
+			if (!model.geometry.boundingSphere) {
+				model.geometry.computeBoundingSphere();
+			}
+			var dir = model.geometry.boundingSphere.center.clone().normalize();
+			var distance = -model.geometry.boundingSphere.center.clone().length();
+			model.translateOnAxis(dir, distance);
+		},
+
 		/**
 		 *
 		 * @param {Object} geometry
@@ -196,18 +205,21 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		 */
 		_setRootModel : function(geometry, pickable, centered) {
 
+			// TODO Move to Partview, properly reset 
+			// pick widget
+			// TODO Properly reset camera as well.
+
 			if (this._rootModel) {
 				this._scene.remove(this._rootModel);
 			}
 
 			var model = new THREE.Mesh(geometry, this._defaultMaterial);
 			this._scene.add(model);
-			geometry.computeBoundingSphere();
+			this._rootModel = model;
 			if (centered == true) {
-				var dir = geometry.boundingSphere.center.clone().normalize();
-				var distance = -geometry.boundingSphere.radius;
-				model.translateOnAxis(dir, distance);
+				this._centerModel(model);
 			}
+			console.log(model.position);
 			if (pickable) {
 				this._pickableObjects.push(model);
 			}
@@ -216,7 +228,6 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			var vec = this._camera.position.clone().sub(new THREE.Vector3(0, 0, 0)).normalize();
 			var position = vec.multiplyScalar(distance);
 			this._camera.position = position;
-
 		},
 
 		_keyboardHandler : function(event) {

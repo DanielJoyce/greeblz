@@ -102,9 +102,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 			this._scene.add(model);
 			geometry.computeBoundingSphere();
 			if (centered == true) {
-				var dir = geometry.boundingSphere.center.clone().normalize();
-				var distance = -geometry.boundingSphere.radius;
-				model.translateOnAxis(dir, distance);
+				this._centerModel(model);
 			}
 			if (pickable) {
 				this._pickableObjects.push(model);
