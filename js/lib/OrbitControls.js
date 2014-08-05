@@ -5,10 +5,10 @@
  * @author WestLangley / http://github.com/WestLangley
  */
 
-THREE.OrbitControls = function ( object, domElement ) {
+THREE.OrbitControls = function(object, domElement) {
 
 	this.object = object;
-	this.domElement = ( domElement !== undefined ) ? domElement : document;
+	this.domElement = (domElement !== undefined ) ? domElement : document;
 
 	// API
 
@@ -26,16 +26,27 @@ THREE.OrbitControls = function ( object, domElement ) {
 	this.userPanSpeed = 2.0;
 
 	this.autoRotate = false;
-	this.autoRotateSpeed = 2.0; // 30 seconds per round when fps is 60
+	this.autoRotateSpeed = 2.0;
+	// 30 seconds per round when fps is 60
 
-	this.minPolarAngle = 0; // radians
-	this.maxPolarAngle = Math.PI; // radians
+	this.minPolarAngle = 0;
+	// radians
+	this.maxPolarAngle = Math.PI;
+	// radians
 
 	this.minDistance = 0;
 	this.maxDistance = Infinity;
 
 	// 65 /*A*/, 83 /*S*/, 68 /*D*/
-	this.keys = { LEFT: 37, UP: 38, RIGHT: 39, BOTTOM: 40, ROTATE: 65, ZOOM: 83, PAN: 68 };
+	this.keys = {
+		LEFT : 37,
+		UP : 38,
+		RIGHT : 39,
+		BOTTOM : 40,
+		ROTATE : 65,
+		ZOOM : 83,
+		PAN : 68
+	};
 
 	// internals
 
@@ -58,17 +69,23 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 	var lastPosition = new THREE.Vector3();
 
-	var STATE = { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2 };
+	var STATE = {
+		NONE : -1,
+		ROTATE : 0,
+		ZOOM : 1,
+		PAN : 2
+	};
 	var state = STATE.NONE;
 
 	// events
 
-	var changeEvent = { type: 'change' };
+	var changeEvent = {
+		type : 'change'
+	};
 
+	this.rotateLeft = function(angle) {
 
-	this.rotateLeft = function ( angle ) {
-
-		if ( angle === undefined ) {
+		if (angle === undefined) {
 
 			angle = getAutoRotationAngle();
 
@@ -78,9 +95,9 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 	};
 
-	this.rotateRight = function ( angle ) {
+	this.rotateRight = function(angle) {
 
-		if ( angle === undefined ) {
+		if (angle === undefined) {
 
 			angle = getAutoRotationAngle();
 
@@ -90,9 +107,9 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 	};
 
-	this.rotateUp = function ( angle ) {
+	this.rotateUp = function(angle) {
 
-		if ( angle === undefined ) {
+		if (angle === undefined) {
 
 			angle = getAutoRotationAngle();
 
@@ -102,9 +119,9 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 	};
 
-	this.rotateDown = function ( angle ) {
+	this.rotateDown = function(angle) {
 
-		if ( angle === undefined ) {
+		if (angle === undefined) {
 
 			angle = getAutoRotationAngle();
 
@@ -114,9 +131,9 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 	};
 
-	this.zoomIn = function ( zoomScale ) {
+	this.zoomIn = function(zoomScale) {
 
-		if ( zoomScale === undefined ) {
+		if (zoomScale === undefined) {
 
 			zoomScale = getZoomScale();
 
@@ -126,9 +143,9 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 	};
 
-	this.zoomOut = function ( zoomScale ) {
+	this.zoomOut = function(zoomScale) {
 
-		if ( zoomScale === undefined ) {
+		if (zoomScale === undefined) {
 
 			zoomScale = getZoomScale();
 
@@ -138,32 +155,32 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 	};
 
-	this.pan = function ( distance ) {
+	this.pan = function(distance) {
 
-		distance.transformDirection( this.object.matrix );
-		distance.multiplyScalar( scope.userPanSpeed );
+		distance.transformDirection(this.object.matrix);
+		distance.multiplyScalar(scope.userPanSpeed);
 
-		this.object.position.add( distance );
-		this.center.add( distance );
+		this.object.position.add(distance);
+		this.center.add(distance);
 
 	};
 
-	this.update = function () {
+	this.update = function() {
 
 		var position = this.object.position;
-		var offset = position.clone().sub( this.center );
+		var offset = position.clone().sub(this.center);
 
 		// angle from z-axis around y-axis
 
-		var theta = Math.atan2( offset.x, offset.z );
+		var theta = Math.atan2(offset.x, offset.z);
 
 		// angle from y-axis
 
-		var phi = Math.atan2( Math.sqrt( offset.x * offset.x + offset.z * offset.z ), offset.y );
+		var phi = Math.atan2(Math.sqrt(offset.x * offset.x + offset.z * offset.z), offset.y);
 
-		if ( this.autoRotate ) {
+		if (this.autoRotate) {
 
-			this.rotateLeft( getAutoRotationAngle() );
+			this.rotateLeft(getAutoRotationAngle());
 
 		}
 
@@ -171,38 +188,37 @@ THREE.OrbitControls = function ( object, domElement ) {
 		phi += phiDelta;
 
 		// restrict phi to be between desired limits
-		phi = Math.max( this.minPolarAngle, Math.min( this.maxPolarAngle, phi ) );
+		phi = Math.max(this.minPolarAngle, Math.min(this.maxPolarAngle, phi));
 
 		// restrict phi to be betwee EPS and PI-EPS
-		phi = Math.max( EPS, Math.min( Math.PI - EPS, phi ) );
+		phi = Math.max(EPS, Math.min(Math.PI - EPS, phi));
 
 		var radius = offset.length() * scale;
 
 		// restrict radius to be between desired limits
-		radius = Math.max( this.minDistance, Math.min( this.maxDistance, radius ) );
+		radius = Math.max(this.minDistance, Math.min(this.maxDistance, radius));
 
-		offset.x = radius * Math.sin( phi ) * Math.sin( theta );
-		offset.y = radius * Math.cos( phi );
-		offset.z = radius * Math.sin( phi ) * Math.cos( theta );
+		offset.x = radius * Math.sin(phi) * Math.sin(theta);
+		offset.y = radius * Math.cos(phi);
+		offset.z = radius * Math.sin(phi) * Math.cos(theta);
 
-		position.copy( this.center ).add( offset );
+		position.copy(this.center).add(offset);
 
-		this.object.lookAt( this.center );
+		this.object.lookAt(this.center);
 
 		thetaDelta = 0;
 		phiDelta = 0;
 		scale = 1;
 
-		if ( lastPosition.distanceTo( this.object.position ) > 0 ) {
+		if (lastPosition.distanceTo(this.object.position) > 0) {
 
-			this.dispatchEvent( changeEvent );
+			this.dispatchEvent(changeEvent);
 
-			lastPosition.copy( this.object.position );
+			lastPosition.copy(this.object.position);
 
 		}
 
 	};
-
 
 	function getAutoRotationAngle() {
 
@@ -212,75 +228,74 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 	function getZoomScale() {
 
-		return Math.pow( 0.95, scope.userZoomSpeed );
+		return Math.pow(0.95, scope.userZoomSpeed);
 
 	}
 
-	function onMouseDown( event ) {
+	function onMouseDown(event) {
 
-		if ( scope.enabled === false ) return;
-		if ( scope.userRotate === false ) return;
+		if (scope.enabled === false)
+			return;
+		if (scope.userRotate === false)
+			return;
 
 		event.preventDefault();
 
-		if ( state === STATE.NONE )
-		{
-			if ( event.button === 0 )
+		if (state === STATE.NONE) {
+			if (event.button === 0)
 				state = STATE.ROTATE;
-			if ( event.button === 1 )
+			if (event.button === 1)
 				state = STATE.ZOOM;
-			if ( event.button === 2 )
+			if (event.button === 2)
 				state = STATE.PAN;
 		}
-		
-		
-		if ( state === STATE.ROTATE ) {
+
+		if (state === STATE.ROTATE) {
 
 			//state = STATE.ROTATE;
 
-			rotateStart.set( event.clientX, event.clientY );
+			rotateStart.set(event.clientX, event.clientY);
 
-		} else if ( state === STATE.ZOOM ) {
+		} else if (state === STATE.ZOOM) {
 
 			//state = STATE.ZOOM;
 
-			zoomStart.set( event.clientX, event.clientY );
+			zoomStart.set(event.clientX, event.clientY);
 
-		} else if ( state === STATE.PAN ) {
+		} else if (state === STATE.PAN) {
 
 			//state = STATE.PAN;
 
 		}
 
-		document.addEventListener( 'mousemove', onMouseMove, false );
-		document.addEventListener( 'mouseup', onMouseUp, false );
+		document.addEventListener('mousemove', onMouseMove, false);
+		document.addEventListener('mouseup', onMouseUp, false);
 
 	}
 
-	function onMouseMove( event ) {
+	function onMouseMove(event) {
 
-		if ( scope.enabled === false ) return;
+		if (scope.enabled === false)
+			return;
 
 		event.preventDefault();
 
-		
-		
-		if ( state === STATE.ROTATE ) {
+		if (state === STATE.ROTATE && scope.userRotate === true) {
 
-			rotateEnd.set( event.clientX, event.clientY );
-			rotateDelta.subVectors( rotateEnd, rotateStart );
+			rotateEnd.set(event.clientX, event.clientY);
+			rotateDelta.subVectors(rotateEnd, rotateStart);
 
-			scope.rotateLeft( 2 * Math.PI * rotateDelta.x / PIXELS_PER_ROUND * scope.userRotateSpeed );
-			scope.rotateUp( 2 * Math.PI * rotateDelta.y / PIXELS_PER_ROUND * scope.userRotateSpeed );
+			scope.rotateLeft(2 * Math.PI * rotateDelta.x / PIXELS_PER_ROUND * scope.userRotateSpeed);
+			scope.rotateUp(2 * Math.PI * rotateDelta.y / PIXELS_PER_ROUND * scope.userRotateSpeed);
 
-			rotateStart.copy( rotateEnd );
+			rotateStart.copy(rotateEnd);
 
-		} else if ( state === STATE.ZOOM ) {
+		} else if (state === STATE.ZOOM && scope.userZoom === true) {
 
-			zoomEnd.set( event.clientX, event.clientY );
-			zoomDelta.subVectors( zoomEnd, zoomStart );
+			zoomEnd.set(event.clientX, event.clientY);
+			zoomDelta.subVectors(zoomEnd, zoomStart);
 
-			if ( zoomDelta.y > 0 ) {
+			if (zoomDelta.y > 0) {
 
 				scope.zoomIn();
 
@@ -290,49 +305,53 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 			}
 
-			zoomStart.copy( zoomEnd );
+			zoomStart.copy(zoomEnd);
 
-		} else if ( state === STATE.PAN ) {
+		} else if (state === STATE.PAN && scope.userPan === true) {
 
 			var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
 			var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 
-			scope.pan( new THREE.Vector3( - movementX, movementY, 0 ) );
+			scope.pan(new THREE.Vector3(-movementX, movementY, 0));
 
 		}
 
 	}
 
-	function onMouseUp( event ) {
+	function onMouseUp(event) {
 
-		if ( scope.enabled === false ) return;
-		if ( scope.userRotate === false ) return;
+		if (scope.enabled === false)
+			return;
+		if (scope.userRotate === false)
+			return;
 
-		document.removeEventListener( 'mousemove', onMouseMove, false );
-		document.removeEventListener( 'mouseup', onMouseUp, false );
+		document.removeEventListener('mousemove', onMouseMove, false);
+		document.removeEventListener('mouseup', onMouseUp, false);
 
 		state = STATE.NONE;
 
 	}
 
-	function onMouseWheel( event ) {
+	function onMouseWheel(event) {
 
-		if ( scope.enabled === false ) return;
-		if ( scope.userZoom === false ) return;
+		if (scope.enabled === false)
+			return;
+		if (scope.userZoom === false)
+			return;
 
 		var delta = 0;
 
-		if ( event.wheelDelta ) { // WebKit / Opera / Explorer 9
+		if (event.wheelDelta) {// WebKit / Opera / Explorer 9
 
 			delta = event.wheelDelta;
 
-		} else if ( event.detail ) { // Firefox
+		} else if (event.detail) {// Firefox
 
-			delta = - event.detail;
+			delta = -event.detail;
 
 		}
 
-		if ( delta > 0 ) {
+		if (delta > 0) {
 
 			scope.zoomOut();
 
@@ -344,26 +363,28 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 	}
 
-	function onKeyDown( event ) {
+	function onKeyDown(event) {
 
-		if ( scope.enabled === false ) return;
-		if ( scope.userPan === false ) return;
+		if (scope.enabled === false)
+			return;
+		if (scope.userPan === false)
+			return;
 
 		switch ( event.keyCode ) {
 
 			/*case scope.keys.UP:
-				scope.pan( new THREE.Vector3( 0, 1, 0 ) );
-				break;
-			case scope.keys.BOTTOM:
-				scope.pan( new THREE.Vector3( 0, - 1, 0 ) );
-				break;
-			case scope.keys.LEFT:
-				scope.pan( new THREE.Vector3( - 1, 0, 0 ) );
-				break;
-			case scope.keys.RIGHT:
-				scope.pan( new THREE.Vector3( 1, 0, 0 ) );
-				break;
-			*/
+			 scope.pan( new THREE.Vector3( 0, 1, 0 ) );
+			 break;
+			 case scope.keys.BOTTOM:
+			 scope.pan( new THREE.Vector3( 0, - 1, 0 ) );
+			 break;
+			 case scope.keys.LEFT:
+			 scope.pan( new THREE.Vector3( - 1, 0, 0 ) );
+			 break;
+			 case scope.keys.RIGHT:
+			 scope.pan( new THREE.Vector3( 1, 0, 0 ) );
+			 break;
+			 */
 			case scope.keys.ROTATE:
 				state = STATE.ROTATE;
 				break;
@@ -373,12 +394,12 @@ THREE.OrbitControls = function ( object, domElement ) {
 			case scope.keys.PAN:
 				state = STATE.PAN;
 				break;
-				
+
 		}
 
 	}
-	
-	function onKeyUp( event ) {
+
+	function onKeyUp(event) {
 
 		switch ( event.keyCode ) {
 
@@ -391,13 +412,17 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 	}
 
-	this.domElement.addEventListener( 'contextmenu', function ( event ) { event.preventDefault(); }, false );
-	this.domElement.addEventListener( 'mousedown', onMouseDown, false );
-	this.domElement.addEventListener( 'mousewheel', onMouseWheel, false );
-	this.domElement.addEventListener( 'DOMMouseScroll', onMouseWheel, false ); // firefox
-	window.addEventListener( 'keydown', onKeyDown, false );
-	window.addEventListener( 'keyup', onKeyUp, false );
+
+	this.domElement.addEventListener('contextmenu', function(event) {
+		event.preventDefault();
+	}, false);
+	this.domElement.addEventListener('mousedown', onMouseDown, false);
+	this.domElement.addEventListener('mousewheel', onMouseWheel, false);
+	this.domElement.addEventListener('DOMMouseScroll', onMouseWheel, false);
+	// firefox
+	window.addEventListener('keydown', onKeyDown, false);
+	window.addEventListener('keyup', onKeyUp, false);
 
 };
 
-THREE.OrbitControls.prototype = Object.create( THREE.EventDispatcher.prototype );
+THREE.OrbitControls.prototype = Object.create(THREE.EventDispatcher.prototype);
