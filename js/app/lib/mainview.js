@@ -52,11 +52,8 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	};
 
 	MainViewScene.prototype._reset = function() {
+		this.$super._reset.call(this);
 		this._pickableObjects = [];
-		if (this._rootModel) {
-			this._scene.remove(this._rootModel);
-		}
-		this._rootModel = null;
 		this._currentMode = MainViewScene.mode.normal;
 		this._selectedPickInfo = {};
 	};
@@ -66,7 +63,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		// we only want to perform a pick if this is a
 		// 'click' without the mouse moving at all
 		this._mouseDown = false;
-		if (this._pickEnabled && !this._mouseMoved) {
+		if (this._pickEnabled === true && this._mouseMoved === false && event.button === 0) {
 			event.preventDefault();
 			var domElement = this._renderer.domElement;
 			var mouse = new THREE.Vector2();
@@ -97,21 +94,25 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	 */
 	MainViewScene.prototype._setRootModel = function(geometry, pickable, centered) {
 		if (this._rootModel == null) {
-			var model = new THREE.Mesh(geometry, this._defaultMaterial);
-			this._rootModel = model;
-			this._scene.add(model);
-			geometry.computeBoundingSphere();
-			if (centered == true) {
-				this._centerModel(model);
-			}
-			if (pickable) {
-				this._pickableObjects.push(model);
-			}
-			// Frame model
-			var distance = 1.2 * geometry.boundingSphere.radius / Math.sin(this.VIEW_ANGLE / 2.0);
-			var vec = this._camera.position.clone().sub(new THREE.Vector3(0, 0, 0)).normalize();
-			var position = vec.multiplyScalar(distance);
-			this._camera.position = position;
+			this._resetCamera();
+
+			this.$super._setRootModel.call(this, geometry, pickable, centered);
+
+			// var model = new THREE.Mesh(geometry, this._defaultMaterial);
+			// this._rootModel = model;
+			// this._scene.add(model);
+			// geometry.computeBoundingSphere();
+			// if (centered == true) {
+			// this._centerModel(model);
+			// }
+			// if (pickable) {
+			// this._pickableObjects.push(model);
+			// }
+			// // Frame model
+			// var distance = 1.2 * geometry.boundingSphere.radius / Math.sin(this.VIEW_ANGLE / 2.0);
+			// var vec = this._camera.position.clone().sub(new THREE.Vector3(0, 0, 0)).normalize();
+			// var position = vec.multiplyScalar(distance);
+			// this._camera.position = position;
 		} else {
 			console.log("Root model already set, ignoring");
 		}

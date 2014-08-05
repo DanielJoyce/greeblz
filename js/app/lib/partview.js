@@ -14,12 +14,28 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'applib/scene'], function
 
 	PartViewScene.prototype.constructor = PartViewScene;
 
+	/**
+	 *
+	 * @param {Object} geometry
+	 * @param {Object} pickable
+	 * @param {Object} centerObject
+	 */
+	PartViewScene.prototype._setRootModel = function(geometry, pickable, centered) {
+
+		this._pickWidget.visible = false;
+
+		this._resetCamera();
+
+		this.$super._setRootModel.call(this, geometry, pickable, centered);
+
+	};
+
 	PartViewScene.prototype._handleMouseUp = function(event) {
 		// Because we are using the transform tools
 		// we only want to perform a pick if this is a
 		// 'click' without the mouse moving at all
 		this._mouseDown = false;
-		if (this._pickEnabled && !this._mouseMoved) {
+		if (this._pickEnabled === true && this._mouseMoved === false && event.button === 0) {
 			this._pickWidget.visible = true;
 			event.preventDefault();
 			var domElement = this._renderer.domElement;

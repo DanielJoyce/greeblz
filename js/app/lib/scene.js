@@ -76,6 +76,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		this._orbitControls = new THREE.OrbitControls(this._camera, this._renderer.domElement);
 		this._orbitControls.maxDistance = 4900;
 		this._orbitControls.enabled = true;
+		this._orbitControls.userPan = false;
 		// STATS
 		// stats = new Stats();
 		// stats.domElement.style.position = 'absolute';
@@ -136,6 +137,19 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 				clearColor : 0x000000,
 				clearAlpha : 1.0
 			};
+		},
+
+		_resetCamera : function() {
+			this._camera.position.set(0, 0, 400);
+			this._camera.lookAt(new THREE.Vector3(0, 0, 0));
+			this._orbitControls.center = new THREE.Vector3();
+		},
+
+		_reset : function() {
+			if (this._rootModel) {
+				this._scene.remove(this._rootModel);
+			}
+			this._rootModel = null;
 		},
 
 		_handleMouseDown : function(event) {
@@ -205,7 +219,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		 */
 		_setRootModel : function(geometry, pickable, centered) {
 
-			// TODO Move to Partview, properly reset 
+			// TODO Move to Partview, properly reset
 			// pick widget
 			// TODO Properly reset camera as well.
 
