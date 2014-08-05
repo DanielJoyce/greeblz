@@ -84,9 +84,9 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		// stats.domElement.style.zIndex = 100;
 		// container.appendChild( stats.domElement );
 		// LIGHT
-		this._light = new THREE.DirectionalLight(0xffffff);
-		this._light.position.set(0, 1, 0);
-		this._scene.add(this._light);
+		//this._light = new THREE.DirectionalLight(0xffffff);
+		//this._light.position.set(0, 1, 0);
+		//this._scene.add(this._light);
 
 		this._defaultMaterial = materials.sprueGreyMaterial;
 

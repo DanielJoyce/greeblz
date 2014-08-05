@@ -36,10 +36,12 @@ define(["lib/three"], function() {"use strict";
 		});
 
 		this.sprueGreyMaterial = new THREE.MeshPhongMaterial({
-			ambient : 0x000000,
+			ambient : 0x151515,
+            emissive : 0x202020,
 			color : Colors.sprueGrey,
-			specular : 0x101010,
-			shininess : 500,
+			specular : 0x202020,
+			shininess : 50,
+            shading : THREE.SmoothShading,
 			transparent : true
 		});
 
@@ -47,7 +49,7 @@ define(["lib/three"], function() {"use strict";
 			ambient : 0x000000,
 			color : Colors.greenstuff,
 			specular : 0x050500,
-			shininess : 500,
+			shininess : 50,
 			transparent : true
 		});
 
