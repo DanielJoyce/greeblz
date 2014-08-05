@@ -42,8 +42,8 @@ button.round {
 	border-radius: 25px;
 	background: #FFFFFF;
 	border: none;
-	transition: all 200ms linear;
-	box-shadow: 0px 0px 10px #454545;
+	transition: all 100ms linear;
+	box-shadow: 0px 0px 10px #454545, inset 0px 0px 0px 25px rgba(69,69,69,0.45);
 }
 
 button.round:hover {
