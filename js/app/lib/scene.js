@@ -226,7 +226,8 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			if (this._rootModel) {
 				this._scene.remove(this._rootModel);
 			}
-
+            geometry.computeVertexNormals(true);
+            geometry.computeFaceNormals();
 			var model = new THREE.Mesh(geometry, this._defaultMaterial);
 			this._scene.add(model);
 			this._rootModel = model;
