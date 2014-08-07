@@ -4,6 +4,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		GreeblzScene.call(this, options);
 
 		this._selectedPickInfo = null;
+		this._currentPartViewPick = null;
 
 		this._currentMode = MainViewScene.mode.normal;
 
@@ -29,25 +30,25 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	MainViewScene.prototype.constructor = GreeblzScene;
 
 	MainViewScene.prototype._handlePubsubMsg = function(msg) {
-		try {
-			switch (msg.type) {
-				case MainViewScene.mode.add:
-					this._currentMode = MainViewScene.mode.add;
-					this._loadUrl(msg.child.url, this._addChildCallback.bind(this, msg));
-					break;
-				case MainViewScene.mode.reset:
-					this._currentMode = MainViewScene.mode.reset;
-					this._reset();
-
-				default:
-					console.log("Calling super...");
-					this.$super._handlePubsubMsg.call(this, msg);
-			}
-		} catch (e) {
-			console.error("Encountered exception while handling message");
-			console.error(e);
-		} finally {
-			this._currentMode = MainViewScene.mode.normal;
+		switch (msg.type) {
+			case 'partViewPick':
+				this._currentPartViewPick = msg;
+				break;
+			case MainViewScene.mode.add:
+				this._currentMode = MainViewScene.mode.add;
+				// this._loadUrl(msg.child.url, this._addChildCallback.bind(this, msg));
+				break;
+			case MainViewScene.mode.remove:
+				this._currentMode = MainViewScene.mode.remove;
+				// this._loadUrl(msg.child.url, this._addChildCallback.bind(this, msg));
+				break;
+			case MainViewScene.mode.reset:
+				this._currentMode = MainViewScene.mode.reset;
+				this._reset();
+				break;
+			default:
+				console.log("Calling super...");
+				this.$super._handlePubsubMsg.call(this, msg);
 		}
 	};
 
@@ -55,7 +56,8 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		this.$super._reset.call(this);
 		this._pickableObjects = [];
 		this._currentMode = MainViewScene.mode.normal;
-		this._selectedPickInfo = {};
+		this._selectedPickInfo = null;
+		this._currentPartViewPick = null;
 	};
 
 	MainViewScene.prototype._handleMouseUp = function(event) {
@@ -78,10 +80,22 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 			// console.debug(picked);
 			if (picked.length > 0) {
 				this._selectedPickInfo = picked[0];
-				this._pubsub.publish(this._appTopic, {
-					type : "mainViewSelected",
-					uuid : this._selectedPickInfo.object.uuid,
-				});
+				// this._pubsub.publish(this._appTopic, {
+				// type : "mainViewSelected",
+				// uuid : this._selectedPickInfo.object.uuid,
+				// });
+				switch (this._currentMode) {
+					case MainViewScene.mode.add:
+						this._loadUrl(this._currentPartViewPick.url, this._addChildCallback.bind(this));
+						break;
+					case MainViewScene.mode.remove:
+					 	var parent = this._selectedPickInfo.object.parent;
+						parent.remove( this._selectedPickInfo.object);
+						this._currentMode = MainViewScene.mode.normal;
+					default:
+						break;
+				}
+
 			}
 		}
 	};
@@ -118,38 +132,31 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		}
 	};
 
-	MainViewScene.prototype._addChildCallback = function(msg, url, geometry) {
+	MainViewScene.prototype._addChildCallback = function(url, geometry) {
 		var selectedObj = this._selectedPickInfo.object;
-		if (msg.parent.uuid === selectedObj.uuid) {
-
-			var target = selectedObj;
-			var pNormal = this._selectedPickInfo.face.normal;
-			var pPoint = this._selectedPickInfo.point;
-			target.worldToLocal(pPoint);
-			var cNormal = msg.child.normal;
-			var cPoint = msg.child.point;
-			var cGeom = geometry;
-			cGeom.name = url;
-			var container = new THREE.Object3D();
-			container.position = pPoint;
-			target.add(container);
-			var dquat = new THREE.Quaternion();
-			dquat.setFromUnitVectors(cNormal.normalize(), pNormal.clone().negate().normalize());
-			container.setRotationFromQuaternion(dquat.normalize());
-			//container.rotation.z = 0;
-			var cModel = new THREE.Mesh(cGeom, this._defaultMaterial.clone());
-			var cDir = cPoint.clone().negate().normalize();
-			var cDistance = cPoint.clone().length();
-			cModel.translateOnAxis(cDir, cDistance);
-			container.add(cModel);
-			this._pickableObjects.push(cModel);
-		} else {
-			console.group("Bad ADD");
-			console.log("Current selected UUID " + this._selectedPickInfo.object.uuid);
-			console.log("Got ADD Target UUID " + msg.parent.uuid);
-			console.groupEnd();
-		}
-
+		var partPickInfo = this._currentPartViewPick;
+		var target = selectedObj;
+		var pNormal = this._selectedPickInfo.face.normal;
+		var pPoint = this._selectedPickInfo.point;
+		target.worldToLocal(pPoint);
+		var cNormal = partPickInfo.normal;
+		var cPoint = partPickInfo.point;
+		var cGeom = geometry;
+		cGeom.name = url;
+		var container = new THREE.Object3D();
+		container.position = pPoint;
+		target.add(container);
+		var dquat = new THREE.Quaternion();
+		dquat.setFromUnitVectors(cNormal.normalize(), pNormal.clone().negate().normalize());
+		container.setRotationFromQuaternion(dquat.normalize());
+		//container.rotation.z = 0;
+		var cModel = new THREE.Mesh(cGeom, this._defaultMaterial.clone());
+		var cDir = cPoint.clone().negate().normalize();
+		var cDistance = cPoint.clone().length();
+		cModel.translateOnAxis(cDir, cDistance);
+		container.add(cModel);
+		this._pickableObjects.push(cModel);
+		this._currentMode = MainViewScene.mode.normal;
 	};
 
 	return MainViewScene;

@@ -1,10 +1,10 @@
 define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib/hardpoint', 'applib/pubsub', 'applib/command', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowResize', 'lib/OrbitControls', 'lib/TransformControls'], function($, MainViewScene, PartViewScene, common, Hardpoint, PubSub, commands) {"use strict";
 	function GreeblzEditor() {
 
-		$("#addPart").click(this._buttonHandler);
+		$("#addPart").click(this._addPartHandler.bind(this));
 		$("#cutPart").click(this._buttonHandler);
 		$("#copyPart").click(this._buttonHandler);
-		$("#removePart").click(this._buttonHandler);
+		$("#removePart").click(this._removePartHandler.bind(this));
 		$("#saveFigure").click(this._saveFigureHandler.bind(this));
 		$("#settings").click(this._settingsHandler.bind(this));
 		$("#trashFigure").click(this._trashFigureHandler.bind(this));
@@ -67,26 +67,29 @@ define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib
 			console.groupEnd();
 
 			switch (msg.type) {
-				case "mainViewSelected":
-					if (this._currentPartSelection.pickPoint && this._currentPartSelection.pickNormal) {
-						this._pubsub.publish(this._mainViewTopic, {
-							type : MainViewScene.mode.add,
-							parent : {
-								uuid : msg.uuid,
-							},
-							child : {
-								url : this._currentPartSelection.url,
-								point : this._currentPartSelection.pickPoint.clone(),
-								normal : this._currentPartSelection.pickNormal.clone()
-							}
-						});
-					}
-					break;
+				// case "mainViewSelected":
+				// if (this._currentPartSelection.pickPoint && this._currentPartSelection.pickNormal) {
+				// this._pubsub.publish(this._mainViewTopic, {
+				// type : MainViewScene.mode.add,
+				// parent : {
+				// uuid : msg.uuid,
+				// },
+				// child : {
+				// url : this._currentPartSelection.url,
+				// point : this._currentPartSelection.pickPoint.clone(),
+				// normal : this._currentPartSelection.pickNormal.clone()
+				// }
+				// });
+				// }
+				// break;
 
 				case "partViewPick":
-					this._currentPartSelection.url = msg.url;
-					this._currentPartSelection.pickPoint = msg.point;
-					this._currentPartSelection.pickNormal = msg.normal;
+					this._pubsub.publish(this._mainViewTopic, {
+						type : "partViewPick",
+						url : msg.url,
+						point : msg.point,
+						normal : msg.normal
+					});
 					break;
 
 			}
@@ -109,11 +112,25 @@ define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib
 		_saveFigureHandler : function(event) {
 			alert("Not implemented yet!");
 		},
-		
+
 		_settingsHandler : function(event) {
 			alert("Not implemented yet!");
 		},
-		
+
+		_addPartHandler : function(event) {
+			this._pubsub.publish(this._mainViewTopic, {
+				type : MainViewScene.mode.add
+			});
+		},
+
+		_removePartHandler : function(event) {
+			if (confirm("Remove this part and all children?")) {
+				this._pubsub.publish(this._mainViewTopic, {
+					type : MainViewScene.mode.remove
+				});
+			}
+		},
+
 		_trashFigureHandler : function(event) {
 			if (confirm("Delete all work and start over?\nEverything will be lost unless saved!")) {
 				this._pubsub.publish(this._mainViewTopic, {
