@@ -35,6 +35,8 @@ http://www.cs.jhu.edu/~misha/Fall07/
 
 http://www.cs.jhu.edu/~misha/Code/
 
+Look into "Doubly Linked Face List", as it can be used to ensure the 2-manifold nature of a surface.
+
 
 STUPID IDEA, simply store a simple json doc with metata for each mesh
 
