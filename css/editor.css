@@ -1,13 +1,13 @@
 /* Layout */
 
 /*
-	Colors.blue = 0x5079c2;
-	Colors.red = 0xc25079;
-	Colors.green = 0x79c250;
-	Colors.white = 0xdedede;
-	Colors.sprueGrey = 0x666666;
-	Colors.greenstuff = 0x0da624;
-*/
+ Colors.blue = 0x5079c2;
+ Colors.red = 0xc25079;
+ Colors.green = 0x79c250;
+ Colors.white = 0xdedede;
+ Colors.sprueGrey = 0x666666;
+ Colors.greenstuff = 0x0da624;
+ */
 
 html {
 	min-height: 100%;
@@ -48,7 +48,7 @@ button.round {
 
 button.round:hover {
 	border: 1px solid #454545;
-	box-shadow: 0px 0px 3px #454545; 
+	box-shadow: 0px 0px 3px #454545;
 }
 
 .red {
@@ -150,25 +150,47 @@ button.round:hover {
 	display: flex;
 	height: 100%;
 	flex-flow: column;
-    justify-content: flex-start;
+	justify-content: flex-start;
 	flex: 1 0;
 }
 
 #search-results {
 	display: flex;
 	flex-flow: column;
-    justify-content: flex-start;
-	flex: 1 0;
-	overflow-y: scroll;
+	justify-content: flex-start;
+	flex: 1 1;
+	/*overflow-y: scroll;*/
 }
 
-#search-results > a {
-	display: flex;
-	flex: 0 0 30px;
+#search-results  ol {
+	list-style-type: none;
+	/*display: flex;*/
+	flex-flow: column;
+	justify-content: flex-start;
+	flex: 1 1;
 	box-sizing: border-box;
-	border: 3px solid #FFFFFF;
+	/*border: 3px solid #FFFFFF;*/
 	box-shadow: 0px 0px 10px #454545;
-	margin: 1px 10px 1px 10px;
+	/*margin: 1px 10px 1px 10px;*/
+	padding: 0px;
+	overflow-y: auto;
+}
+
+#search-results > ol > li {
+	/*padding: 10px;*/
+	/*display: flex;*/
+	box-sizing: border-box;
+	width: 100%;
+	border-bottom: 1px solid #454545;
+	padding: 10px;
+	margin: 0px;
+}
+
+#search-results > ol > li:first-child {
+}
+
+#search-results > ol > li:last-child {
+	bottom-border: none;
 }
 
 #main-view.paper > canvas {
@@ -226,7 +248,7 @@ label::after {
 
 #search-panel > input[type='search'] {
 	display: flex;
-	flex: 0,0;
+	flex: 0, 0;
 	width: 100%;
 	margin-bottom: 5px;
 }

@@ -9,7 +9,7 @@ define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib
 		$("#settings").click(this._settingsHandler.bind(this));
 		$("#trashFigure").click(this._trashFigureHandler.bind(this));
 
-		$("#search-results > a").click(this._searchResultClickHandler.bind(this));
+		$("#search-results > ol > li > a").click(this._searchResultClickHandler.bind(this));
 
 		// Queue for undo/redo support
 		this._commandQueue = new Array(100);
