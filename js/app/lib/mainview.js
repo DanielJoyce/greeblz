@@ -79,18 +79,37 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 			var picked = this._raycaster.intersectObjects(this._pickableObjects, true);
 			// console.debug(picked);
 			if (picked.length > 0) {
+				var scope = this;
+				// Unhighlight via old select info
+				if (this._selectedPickInfo) {
+					this._selectedPickInfo.object.traverse(function(obj) {
+						if ( obj instanceof THREE.Mesh) {
+							obj.material = scope._defaultMaterial;
+						}
+					});
+				}
+
 				this._selectedPickInfo = picked[0];
 				// this._pubsub.publish(this._appTopic, {
 				// type : "mainViewSelected",
 				// uuid : this._selectedPickInfo.object.uuid,
 				// });
+
+				this._selectedPickInfo.object.traverse(function(obj) {
+					if ( obj instanceof THREE.Mesh) {
+						obj.material = scope._materials.selectMaterial;
+					}
+				});
+
 				switch (this._currentMode) {
 					case MainViewScene.mode.add:
 						this._loadUrl(this._currentPartViewPick.url, this._addChildCallback.bind(this));
 						break;
 					case MainViewScene.mode.remove:
-					 	var parent = this._selectedPickInfo.object.parent;
-						parent.remove( this._selectedPickInfo.object);
+						var parent = this._selectedPickInfo.object.parent;
+						parent.remove(this._selectedPickInfo.object);
+						this._scene.remove(this._selectedPickInfo.object);
+						this._setPickableObjects(this._rootModel);
 						this._currentMode = MainViewScene.mode.normal;
 					default:
 						break;
@@ -155,8 +174,15 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		var cDistance = cPoint.clone().length();
 		cModel.translateOnAxis(cDir, cDistance);
 		container.add(cModel);
-		this._pickableObjects.push(cModel);
+		this._setPickableObjects(this._rootModel);
 		this._currentMode = MainViewScene.mode.normal;
+		var scope = this;
+		this._selectedPickInfo.object.traverse(function(obj) {
+			if ( obj instanceof THREE.Mesh) {
+				obj.material = scope._materials.selectMaterial;
+			}
+		});
+
 	};
 
 	return MainViewScene;

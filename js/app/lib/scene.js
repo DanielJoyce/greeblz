@@ -9,7 +9,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		// MAIN
 		// standard global variables
 
-		var materials = new common.materials();
+		this._materials = new common.materials();
 
 		this._scene = null;
 		this._camera = null;
@@ -88,7 +88,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		//this._light.position.set(0, 1, 0);
 		//this._scene.add(this._light);
 
-		this._defaultMaterial = materials.sprueGreyMaterial;
+		this._defaultMaterial = this._materials.sprueGreyMaterial;
 
 		// var axes = new THREE.AxisHelper(1000);
 		// this._scene.add(axes);
@@ -150,6 +150,22 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 				this._scene.remove(this._rootModel);
 			}
 			this._rootModel = null;
+		},
+
+		/**
+		 * Set pickable objects to the given root model
+		 * and its children. Only Mesh objects are considered.
+		 */
+		_setPickableObjects : function(rootModel) {
+			if (rootModel) {
+				this._pickableObjects = $.grep(rootModel.children, function(obj) {
+					if ( obj instanceof THREE.Mesh) {
+						return true;
+					}
+					return false;
+				});
+				this._pickableObjects.push(rootModel);
+			}
 		},
 
 		_handleMouseDown : function(event) {
@@ -226,8 +242,8 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			if (this._rootModel) {
 				this._scene.remove(this._rootModel);
 			}
-            geometry.computeVertexNormals(true);
-            geometry.computeFaceNormals();
+			geometry.computeVertexNormals(true);
+			geometry.computeFaceNormals();
 			var model = new THREE.Mesh(geometry, this._defaultMaterial);
 			this._scene.add(model);
 			this._rootModel = model;
@@ -236,7 +252,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			}
 			console.log(model.position);
 			if (pickable) {
-				this._pickableObjects.push(model);
+				this._setPickableObjects(model);
 			}
 			// Frame model
 			var distance = 1.2 * geometry.boundingSphere.radius / Math.sin(this.VIEW_ANGLE / 2.0);
