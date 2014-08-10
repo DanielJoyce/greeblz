@@ -14,25 +14,21 @@ define(["lib/three"], function() {"use strict";
 		this.blueMaterial = new THREE.MeshLambertMaterial({
 			color : Colors.blue,
 			shading : THREE.FlatShading,
-			transparent : true
 		});
 
 		this.whiteMaterial = new THREE.MeshLambertMaterial({
 			color : Colors.white,
 			shading : THREE.FlatShading,
-			transparent : true
 		});
 
 		this.redMaterial = new THREE.MeshLambertMaterial({
 			color : Colors.red,
 			shading : THREE.FlatShading,
-			transparent : true
 		});
 
 		this.greenMaterial = new THREE.MeshLambertMaterial({
 			color : Colors.green,
 			shading : THREE.FlatShading,
-			transparent : true
 		});
 
 		this.sprueGreyMaterial = new THREE.MeshPhongMaterial({
@@ -42,7 +38,6 @@ define(["lib/three"], function() {"use strict";
 			specular : 0x202020,
 			shininess : 50,
             shading : THREE.SmoothShading,
-			transparent : true
 		});
 
 		this.greenstuffMaterial = new THREE.MeshPhongMaterial({
@@ -50,7 +45,6 @@ define(["lib/three"], function() {"use strict";
 			color : Colors.greenstuff,
 			specular : 0x050500,
 			shininess : 50,
-			transparent : true
 		});
 
 		this.selectMaterial = this.greenMaterial.clone();
