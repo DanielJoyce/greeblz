@@ -9,7 +9,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		this._currentMode = MainViewScene.mode.normal;
 
 		this._control = new THREE.TransformControls(this._camera, this._renderer.domElement);
-		this._control.addEventListener('change', this._render.bind(this));
+		//this._control.addEventListener('change', this._render.bind(this));
 		this._control.setSpace("local");
 
 		this._scene.add(this._control);
@@ -176,6 +176,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 							this._setPickableObjects(this._rootModel);
 							this._currentMode = MainViewScene.mode.normal;
 						}
+						break;
 					default:
 						break;
 				}
@@ -187,12 +188,6 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 						obj.material = scope._defaultMaterial;
 					}
 				});
-			}
-		}
-		if (this._currentMode === MainViewScene.mode.transform) {
-			this._control.detach();
-			if (this._selectedPickInfo.object.parent && this._selectedPickInfo.object !== this._rootModel) {
-				this._control.attach(this._selectedPickInfo.object.parent);
 			}
 		}
 	};
@@ -263,6 +258,12 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 
 	};
 
+	MainViewScene.prototype._update = function() {
+		this.$super._update.call(this);
+		this._control.update();
+		// stats.update();
+	};
+    
 	return MainViewScene;
 
 });
