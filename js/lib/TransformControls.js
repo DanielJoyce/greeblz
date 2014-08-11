@@ -48,7 +48,7 @@
 		this.depthTest = false;
 		this.depthWrite = false;
 		this.transparent = true;
-		this.linewidth = 1;
+		this.linewidth = 3;
 
 		this.setValues( parameters );
 
@@ -340,13 +340,13 @@
 
 		this.handleGizmos = {
 			X: [
-				[ new THREE.Line( new CircleGeometry(1,'x',0.5), new GizmoLineMaterial( { color: 0xff0000 } ) ) ]
+				[ new THREE.Line( new CircleGeometry(1,'x',1), new GizmoLineMaterial( { color: 0xff0000 } ) ) ]
 			],
 			Y: [
-				[ new THREE.Line( new CircleGeometry(1,'y',0.5), new GizmoLineMaterial( { color: 0x00ff00 } ) ) ]
+				[ new THREE.Line( new CircleGeometry(1,'y',1), new GizmoLineMaterial( { color: 0x00ff00 } ) ) ]
 			],
 			Z: [
-				[ new THREE.Line( new CircleGeometry(1,'z',0.5), new GizmoLineMaterial( { color: 0x0000ff } ) ) ]
+				[ new THREE.Line( new CircleGeometry(1,'z',1), new GizmoLineMaterial( { color: 0x0000ff } ) ) ]
 			],
 			E: [
 				[ new THREE.Line( new CircleGeometry(1.25,'z',1), new GizmoLineMaterial( { color: 0xcccc00 } ) ) ]
@@ -358,13 +358,13 @@
 
 		this.pickerGizmos = {
 			X: [
-				[ new THREE.Mesh( new THREE.TorusGeometry( 1, 0.12, 4, 12, Math.PI ), new GizmoMaterial( { color: 0xff0000, opacity: 0.25 } ) ), [ 0, 0, 0 ], [ 0, -Math.PI/2, -Math.PI/2 ] ]
+				[ new THREE.Mesh( new THREE.TorusGeometry( 1, 0.12, 4, 12), new GizmoMaterial( { color: 0xff0000, opacity: 0.25 } ) ), [ 0, 0, 0 ], [ 0, -Math.PI/2, -Math.PI/2 ] ]
 			],
 			Y: [
-				[ new THREE.Mesh( new THREE.TorusGeometry( 1, 0.12, 4, 12, Math.PI ), new GizmoMaterial( { color: 0x00ff00, opacity: 0.25 } ) ), [ 0, 0, 0 ], [ Math.PI/2, 0, 0 ] ]
+				[ new THREE.Mesh( new THREE.TorusGeometry( 1, 0.12, 4, 12), new GizmoMaterial( { color: 0x00ff00, opacity: 0.25 } ) ), [ 0, 0, 0 ], [ Math.PI/2, 0, 0 ] ]
 			],
 			Z: [
-				[ new THREE.Mesh( new THREE.TorusGeometry( 1, 0.12, 4, 12, Math.PI ), new GizmoMaterial( { color: 0x0000ff, opacity: 0.25 } ) ), [ 0, 0, 0 ], [ 0, 0, -Math.PI/2 ] ]
+				[ new THREE.Mesh( new THREE.TorusGeometry( 1, 0.12, 4, 12), new GizmoMaterial( { color: 0x0000ff, opacity: 0.25 } ) ), [ 0, 0, 0 ], [ 0, 0, -Math.PI/2 ] ]
 			],
 			E: [
 				[ new THREE.Mesh( new THREE.TorusGeometry( 1.25, 0.12, 2, 24 ), new GizmoMaterial( { color: 0xffff00, opacity: 0.25 } ) ) ]
@@ -961,17 +961,15 @@
 
 		function intersectObjects( pointer, objects ) {
 
-			var rect = domElement.getBoundingClientRect();
-			var x = (pointer.clientX - rect.left) / rect.width;
-			var y = (pointer.clientY - rect.top) / rect.height;
-			pointerVector.set( ( x ) * 2 - 1, - ( y ) * 2 + 1, 0.5 );
-
+			var mouse = new THREE.Vector2();
+			var pos = $(domElement).position();
+			var relX = pointer.pageX - pos.left;
+			var relY = pointer.pageY - pos.top;
+			pointerVector.set((relX / domElement.width ) * 2 - 1, -(relY / domElement.height ) * 2 + 1, 0);
 			projector.unprojectVector( pointerVector, camera );
 			ray.set( camPosition, pointerVector.sub( camPosition ).normalize() );
-
 			var intersections = ray.intersectObjects( objects, true );
 			return intersections[0] ? intersections[0] : false;
-
 		}
 
 	};

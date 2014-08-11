@@ -116,6 +116,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		// Because we are using the transform tools
 		// we only want to perform a pick if this is a
 		// 'click' without the mouse moving at all
+
 		this._mouseDown = false;
 		if (this._pickEnabled === true && this._mouseMoved === false && event.button === 0) {
 			event.preventDefault();
@@ -148,6 +149,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 
 					case MainViewScene.mode.transform:
 						if (this._selectedPickInfo.object === this._rootModel) {
+							this._control.detach();
 							this._pubsub.publish(this._appTopic, {
 								type : "error",
 								error : "Root model can not be transformed. Please select a different part"
@@ -161,23 +163,36 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 						this._loadUrl(this._currentPartViewPick.url, this._addChildCallback.bind(this));
 						break;
 					case MainViewScene.mode.remove:
-						var parent = this._selectedPickInfo.object.parent;
-						parent.remove(this._selectedPickInfo.object);
-						this._scene.remove(this._selectedPickInfo.object);
-						this._setPickableObjects(this._rootModel);
-						this._currentMode = MainViewScene.mode.normal;
+						if (this._selectedPickInfo.object === this._rootModel) {
+							this._control.detach();
+							this._pubsub.publish(this._appTopic, {
+								type : "error",
+								error : "Root model can not be deleted"
+							});
+						} else {
+							var parent = this._selectedPickInfo.object.parent;
+							parent.remove(this._selectedPickInfo.object);
+							this._scene.remove(this._selectedPickInfo.object);
+							this._setPickableObjects(this._rootModel);
+							this._currentMode = MainViewScene.mode.normal;
+						}
 					default:
 						break;
 				}
 
 			} else {
-				this._control.detach();
 				var scope = this;
 				this._rootModel.traverse(function(obj) {
 					if ( obj instanceof THREE.Mesh) {
 						obj.material = scope._defaultMaterial;
 					}
 				});
+			}
+		}
+		if (this._currentMode === MainViewScene.mode.transform) {
+			this._control.detach();
+			if (this._selectedPickInfo.object.parent && this._selectedPickInfo.object !== this._rootModel) {
+				this._control.attach(this._selectedPickInfo.object.parent);
 			}
 		}
 	};
