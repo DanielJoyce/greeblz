@@ -139,6 +139,19 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			};
 		},
 
+		_doPick : function(pickableObjects, recursive) {
+			var domElement = this._renderer.domElement;
+			var mouse = new THREE.Vector2();
+			var pos = $(domElement).position();
+			var relX = event.pageX - pos.left;
+			var relY = event.pageY - pos.top;
+			var mouseVector = new THREE.Vector3((relX / domElement.width ) * 2 - 1, -(relY / domElement.height ) * 2 + 1, 0);
+			// Fixup mouse vector relative to camera.
+			this._projector.unprojectVector(mouseVector, this._camera);
+			this._raycaster.set(this._camera.position, mouseVector.sub(this._camera.position).normalize());
+			return this._raycaster.intersectObjects(pickableObjects, recursive);
+		},
+
 		_resetCamera : function() {
 			this._camera.position.set(0, 0, 400);
 			this._camera.lookAt(new THREE.Vector3(0, 0, 0));
@@ -269,42 +282,14 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			console.log("KEYBOARD EVENT");
 			console.log(event);
 
-			// if (msg.type = "event") {
-			// var event = msg.event;
 			switch (event.keyCode) {
-				case 81:
-					// Q
-					// control.setSpace(control.space == "local" ? "world" : "local");
-					break;
-				case 87:
-					// W
-					// control.setMode("translate");
-					break;
-				case 69:
-					// E
-					// control.setMode("rotate");
-					break;
-				case 82:
-					// R
-					// control.setMode("scale");
-					break;
+
 				case 84:
 					// T Edit Mode
 					// control.setMode("scale");
 					this._orbitControls.enabled = !this._orbitControls.enabled;
 					break;
-				// case 187:
-				// case 107:
-				// // +,=,num+
-				// control.setSize(control.size + 0.1);
-				// break;
-				// case 189:
-				// case 10:
-				// // -,_,num-
-				// control.setSize(Math.max(control.size - 0.1, 0.1));
-				// break;
 			}
-			// }
 		},
 
 		_loadUrl : function(url, callback) {

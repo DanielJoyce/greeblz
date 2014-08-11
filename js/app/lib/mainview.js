@@ -8,6 +8,12 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 
 		this._currentMode = MainViewScene.mode.normal;
 
+		this._control = new THREE.TransformControls(this._camera, this._renderer.domElement);
+		this._control.addEventListener('change', this._render.bind(this));
+		this._control.setSpace("local");
+
+		this._scene.add(this._control);
+
 	}
 
 
@@ -22,17 +28,62 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		push : "PUSH",
 		scale : "SCALE",
 		normal : "NORMAL",
-		reset : "RESET"
+		reset : "RESET",
+		transform : "TRANSFORM"
 	};
 
 	MainViewScene.prototype = common.inherit(GreeblzScene.prototype);
 
 	MainViewScene.prototype.constructor = GreeblzScene;
 
+	MainViewScene.prototype._keyboardHandler = function(event) {
+
+		if (!this._hasMouse)
+			return;
+
+		this.$super._keyboardHandler(event);
+
+		if (this._currentMode !== MainViewScene.mode.transform)
+			return;
+		//console.log(event.which);
+		switch ( event.keyCode ) {
+			case 81:
+				// Q
+				this._control.setSpace(this._control.space == "local" ? "world" : "local");
+				break;
+			case 87:
+				// W
+				this._control.setMode("translate");
+				break;
+			case 69:
+				// E
+				this._control.setMode("rotate");
+				break;
+			case 82:
+				// R
+				this._control.setMode("scale");
+				break;
+			case 187:
+			case 107:
+				// +,=,num+
+				this._control.setSize(control.size + 0.1);
+				break;
+			case 189:
+			case 10:
+				// -,_,num-
+				this._control.setSize(Math.max(control.size - 0.1, 0.1));
+				break;
+		}
+
+	};
+
 	MainViewScene.prototype._handlePubsubMsg = function(msg) {
 		switch (msg.type) {
 			case 'partViewPick':
 				this._currentPartViewPick = msg;
+				break;
+			case MainViewScene.mode.transform:
+				this._currentMode = MainViewScene.mode.transform;
 				break;
 			case MainViewScene.mode.add:
 				this._currentMode = MainViewScene.mode.add;
@@ -58,25 +109,18 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		this._currentMode = MainViewScene.mode.normal;
 		this._selectedPickInfo = null;
 		this._currentPartViewPick = null;
+		this._control.detach();
 	};
 
 	MainViewScene.prototype._handleMouseUp = function(event) {
 		// Because we are using the transform tools
 		// we only want to perform a pick if this is a
 		// 'click' without the mouse moving at all
+
 		this._mouseDown = false;
 		if (this._pickEnabled === true && this._mouseMoved === false && event.button === 0) {
 			event.preventDefault();
-			var domElement = this._renderer.domElement;
-			var mouse = new THREE.Vector2();
-			var pos = $(domElement).position();
-			var relX = event.pageX - pos.left;
-			var relY = event.pageY - pos.top;
-			var mouseVector = new THREE.Vector3((relX / domElement.width ) * 2 - 1, -(relY / domElement.height ) * 2 + 1, 0);
-			// Fixup mouse vector relative to camera.
-			this._projector.unprojectVector(mouseVector, this._camera);
-			this._raycaster.set(this._camera.position, mouseVector.sub(this._camera.position).normalize());
-			var picked = this._raycaster.intersectObjects(this._pickableObjects, true);
+			var picked = this._doPick(this._pickableObjects, true);
 			// console.debug(picked);
 			if (picked.length > 0) {
 				var scope = this;
@@ -102,19 +146,53 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 				});
 
 				switch (this._currentMode) {
+
+					case MainViewScene.mode.transform:
+						if (this._selectedPickInfo.object === this._rootModel) {
+							this._control.detach();
+							this._pubsub.publish(this._appTopic, {
+								type : "error",
+								error : "Root model can not be transformed. Please select a different part"
+							});
+						} else {
+							// Attach to picked objects parent group.
+							this._control.attach(this._selectedPickInfo.object.parent);
+						}
+						break;
 					case MainViewScene.mode.add:
 						this._loadUrl(this._currentPartViewPick.url, this._addChildCallback.bind(this));
 						break;
 					case MainViewScene.mode.remove:
-						var parent = this._selectedPickInfo.object.parent;
-						parent.remove(this._selectedPickInfo.object);
-						this._scene.remove(this._selectedPickInfo.object);
-						this._setPickableObjects(this._rootModel);
-						this._currentMode = MainViewScene.mode.normal;
+						if (this._selectedPickInfo.object === this._rootModel) {
+							this._control.detach();
+							this._pubsub.publish(this._appTopic, {
+								type : "error",
+								error : "Root model can not be deleted"
+							});
+						} else {
+							var parent = this._selectedPickInfo.object.parent;
+							parent.remove(this._selectedPickInfo.object);
+							this._scene.remove(this._selectedPickInfo.object);
+							this._setPickableObjects(this._rootModel);
+							this._currentMode = MainViewScene.mode.normal;
+						}
 					default:
 						break;
 				}
 
+			} else {
+				var scope = this;
+				this._rootModel.traverse(function(obj) {
+					if ( obj instanceof THREE.Mesh) {
+						obj.material = scope._defaultMaterial;
+					}
+				});
+			}
+		}
+		if (this._currentMode === MainViewScene.mode.transform) {
+			this._control.detach();
+			if (this._selectedPickInfo.object.parent && this._selectedPickInfo.object !== this._rootModel) {
+				this._control.attach(this._selectedPickInfo.object.parent);
 			}
 		}
 	};

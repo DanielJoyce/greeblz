@@ -1,6 +1,7 @@
 define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib/hardpoint', 'applib/pubsub', 'applib/command', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowResize', 'lib/OrbitControls', 'lib/TransformControls'], function($, MainViewScene, PartViewScene, common, Hardpoint, PubSub, commands) {"use strict";
 	function GreeblzEditor() {
 
+		$("#transformPart").click(this._transformPartHandler.bind(this));
 		$("#addPart").click(this._addPartHandler.bind(this));
 		$("#cutPart").click(this._buttonHandler);
 		$("#copyPart").click(this._buttonHandler);
@@ -82,6 +83,9 @@ define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib
 				// });
 				// }
 				// break;
+				case "error" :
+					alert(msg.error);
+					break;
 
 				case "partViewPick":
 					this._pubsub.publish(this._mainViewTopic, {
@@ -117,6 +121,12 @@ define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib
 			alert("Not implemented yet!");
 		},
 
+		_transformPartHandler : function(event) {
+			this._pubsub.publish(this._mainViewTopic, {
+				type : MainViewScene.mode.transform
+			});
+		},
+		
 		_addPartHandler : function(event) {
 			this._pubsub.publish(this._mainViewTopic, {
 				type : MainViewScene.mode.add
