@@ -228,7 +228,30 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		var selectedObj = this._selectedPickInfo.object;
 		var partPickInfo = this._currentPartViewPick;
 		var target = selectedObj;
-		var pNormal = this._selectedPickInfo.face.normal;
+		var pNormal = null;
+		// workaround for bug https://github.com/mrdoob/three.js/issues/5164 until I can update
+		if (this._selectedPickInfo.indices) {
+			var vA = new THREE.Vector3();
+			var vB = new THREE.Vector3();
+			var vC = new THREE.Vector3();
+
+			// Face is null, so pNormal is null
+			var a = this._selectedPickInfo.indices[0];
+			var b = this._selectedPickInfo.indices[1];
+			var c = this._selectedPickInfo.indices[2];
+
+			var positions = geometry.attributes.position.array;
+
+			vA.set(positions[a * 3], positions[a * 3 + 1], positions[a * 3 + 2]);
+			vB.set(positions[b * 3], positions[b * 3 + 1], positions[b * 3 + 2]);
+			vC.set(positions[c * 3], positions[c * 3 + 1], positions[c * 3 + 2]);
+
+			var face = new THREE.Face3(a, b, c, THREE.Triangle.normal(vA, vB, vC));
+			pNormal = face.normal;
+
+		} else {
+			pNormal = this._selectedPickInfo.face.normal;
+		}
 		var pPoint = this._selectedPickInfo.point;
 		target.worldToLocal(pPoint);
 		var cNormal = partPickInfo.normal;
@@ -263,7 +286,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		this._control.update();
 		// stats.update();
 	};
-    
+
 	return MainViewScene;
 
 });
