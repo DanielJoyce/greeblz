@@ -27,6 +27,10 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'applib/scene'], function
 		this._resetCamera();
 
 		this.$super._setRootModel.call(this, geometry, pickable, centered);
+		
+		// Pick widget fits in 20x20x20 cube
+		var scale = 0.5 * this._rootModel.geometry.boundingSphere.radius / 15.0;
+		this._pickWidget.scale.set(scale, scale, scale);
 
 	};
 
