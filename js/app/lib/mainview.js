@@ -1,5 +1,84 @@
 define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzScene) {"use strict";
 
+	// var protoState = {
+	//
+	// // Optional, handle mouse up
+	// handleMouseUp : function(scope) {
+	//
+	// // Return the next state at end of function.
+	// // If no transition, return null
+	// return null;
+	// },
+	//
+	// /**
+	// * When this function is called, 'this' is bound
+	// * to the MainViewScene instance
+	// */
+	// execute : function() {
+	// // Return the next state at end of function.
+	// // If no transition, return null
+	// return null;
+	// }
+	// };
+
+	var partPickState = {
+
+	};
+
+	var resetState = {
+
+		execute : function(msg) {
+			this.$super._reset.call(this);
+			this._pickableObjects = [];
+			this._currentMode = MainViewScene.mode.normal;
+			this._selectedPickInfo = null;
+			this._currentPartViewPick = null;
+			this._control.detach();
+
+			return defaultState;
+		}
+	};
+
+	var defaultState = {
+		
+		// TODO Move message dispatch here, as it dispatches to all other states...
+		execute : function() {
+			
+		}
+
+	};
+
+	var selectedState = {
+
+	};
+
+	var addState = {
+
+	};
+
+	var cutState = {
+
+	};
+	var copyState = {
+
+	};
+
+	var pasteState = {
+
+	};
+
+	var mirrorState = {
+
+	};
+
+	var deleteState = {
+
+	};
+
+	var transformState = {
+
+	};
+
 	function MainViewScene(options) {
 		GreeblzScene.call(this, options);
 
@@ -7,6 +86,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		this._currentPartViewPick = null;
 
 		this._currentMode = MainViewScene.mode.normal;
+		this._currentState = defaultState;
 
 		this._control = new THREE.TransformControls(this._camera, this._renderer.domElement);
 		//this._control.addEventListener('change', this._render.bind(this));
@@ -53,25 +133,25 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 				break;
 			case 87:
 				// W
-				this._control.setMode("translate");
+				this._control.setMode("move");
 				break;
 			case 69:
 				// E
-				this._control.setMode("rotate");
+				this._control.setMode("scale");
 				break;
 			case 82:
 				// R
-				this._control.setMode("scale");
+				this._control.setMode("rotate");
 				break;
 			case 187:
 			case 107:
 				// +,=,num+
-				this._control.setSize(control.size + 0.1);
+				this._control.setSize(control.size * 1.1);
 				break;
 			case 189:
 			case 10:
 				// -,_,num-
-				this._control.setSize(Math.max(control.size - 0.1, 0.1));
+				this._control.setSize(Math.max(control.size * 0.9));
 				break;
 		}
 
@@ -94,22 +174,13 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 				// this._loadUrl(msg.child.url, this._addChildCallback.bind(this, msg));
 				break;
 			case MainViewScene.mode.reset:
+				this._currentState = resetState.execute.call(this);
 				this._currentMode = MainViewScene.mode.reset;
-				this._reset();
 				break;
 			default:
 				console.log("Calling super...");
 				this.$super._handlePubsubMsg.call(this, msg);
 		}
-	};
-
-	MainViewScene.prototype._reset = function() {
-		this.$super._reset.call(this);
-		this._pickableObjects = [];
-		this._currentMode = MainViewScene.mode.normal;
-		this._selectedPickInfo = null;
-		this._currentPartViewPick = null;
-		this._control.detach();
 	};
 
 	MainViewScene.prototype._handleMouseUp = function(event) {
@@ -141,9 +212,10 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 
 				this._selectedPickInfo.object.traverse(function(obj) {
 					if ( obj instanceof THREE.Mesh) {
-						obj.material = scope._materials.selectMaterial;
+						obj.material = scope._materials.highlightMaterial;
 					}
 				});
+				this._selectedPickInfo.object.material = this._materials.selectMaterial;
 
 				switch (this._currentMode) {
 
@@ -225,6 +297,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	};
 
 	MainViewScene.prototype._addChildCallback = function(url, geometry) {
+		geometry.computeBoundingSphere();
 		var selectedObj = this._selectedPickInfo.object;
 		var partPickInfo = this._currentPartViewPick;
 		var target = selectedObj;
@@ -240,7 +313,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 			var b = this._selectedPickInfo.indices[1];
 			var c = this._selectedPickInfo.indices[2];
 
-			var positions = geometry.attributes.position.array;
+			var positions = selectedObj.geometry.attributes.position.array;
 
 			vA.set(positions[a * 3], positions[a * 3 + 1], positions[a * 3 + 2]);
 			vB.set(positions[b * 3], positions[b * 3 + 1], positions[b * 3 + 2]);
@@ -266,6 +339,16 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		container.setRotationFromQuaternion(dquat.normalize());
 		//container.rotation.z = 0;
 		var cModel = new THREE.Mesh(cGeom, this._defaultMaterial.clone());
+		var cRadius = cModel.geometry.boundingSphere.radius;
+		var pRadius = this._rootModel.geometry.boundingSphere.radius;
+		var cScale = cRadius / cRadius;
+		if (cRadius > 10 * pRadius) {
+			cScale = 10 * pRadius / cRadius;
+		}
+		if (cRadius < 0.25 * pRadius) {
+			cScale = 0.25 * pRadius / cRadius;
+		}
+		cModel.scale.set(cScale, cScale, cScale);
 		var cDir = cPoint.clone().negate().normalize();
 		var cDistance = cPoint.clone().length();
 		cModel.translateOnAxis(cDir, cDistance);
@@ -275,9 +358,10 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		var scope = this;
 		this._selectedPickInfo.object.traverse(function(obj) {
 			if ( obj instanceof THREE.Mesh) {
-				obj.material = scope._materials.selectMaterial;
+				obj.material = scope._materials.highlightMaterial;
 			}
 		});
+		this._selectedPickInfo.object.material = this._materials.selectMaterial;
 
 	};
 
