@@ -49,7 +49,7 @@ define(["lib/three"], function() {"use strict";
 
 		this.selectMaterial = this.greenMaterial.clone();
 
-		this.higlightMaterial = this.blueMaterial.clone();
+		this.highlightMaterial = this.blueMaterial.clone();
 
 		this.simpleRedMaterial = new THREE.MeshBasicMaterial({
 			color : 0xff0000
