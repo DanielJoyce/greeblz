@@ -170,15 +170,15 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		 * and its children. Only Mesh objects are considered.
 		 */
 		_setPickableObjects : function(rootModel) {
-			if (rootModel) {
-				this._pickableObjects = $.grep(rootModel.children, function(obj) {
+			this._pickableObjects = [];
+			var scope = this;
+			rootModel.traverse(function(obj) {
+				if (rootModel) {
 					if ( obj instanceof THREE.Mesh) {
-						return true;
+						scope._pickableObjects.push(rootModel);
 					}
-					return false;
-				});
-				this._pickableObjects.push(rootModel);
-			}
+				}
+			});
 		},
 
 		_handleMouseDown : function(event) {
