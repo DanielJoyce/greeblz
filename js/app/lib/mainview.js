@@ -1,9 +1,7 @@
 define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzScene) {"use strict";
 
 	// var protoState = {
-	//
-	// // Optional, handle mouse up
-	// handleMouseUp : function(scope) {
+	// automatic: true/false
 	//
 	// // Return the next state at end of function.
 	// // If no transition, return null
@@ -21,11 +19,29 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	// }
 	// };
 
-	var partPickState = {
+	var defaultState = {
 
+		// TODO Move message dispatch here, as it dispatches to all other states...
+		execute : function(msg) {
+			switch (msg.type) {
+				case 'mouseup':
+					return selectState;
+					break;
+				default:
+					return null;
+			}
+		},
 	};
 
+	// var partPickState = {
+	//
+	// };
+
 	var resetState = {
+
+		// Execute this state immediately when returned
+		// from another state
+		automatic : true,
 
 		execute : function(msg) {
 			this.$super._reset.call(this);
@@ -34,22 +50,71 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 			this._selectedPickInfo = null;
 			this._currentPartViewPick = null;
 			this._control.detach();
-
+			this._hasActiveSelection = false;
+			this._pickableSelectionObjects = [];
 			return defaultState;
 		}
 	};
 
-	var defaultState = {
-		
-		// TODO Move message dispatch here, as it dispatches to all other states...
-		execute : function() {
-			
+	var selectState = {
+		automatic : true,
+
+		execute : function(msg) {
+			switch (msg.type) {
+				case 'mouseup':
+					handleMouseUp(msg);
+					break;
+				default:
+					return null;
+			}
+		},
+
+		handleMouseUp : function(event) {
+			var picked = this._doPick(this._pickableObjects, true);
+			// Has selection changed?
+			if (picked.length > 0 && picked[0] !== this._selectedPickInfo.object) {
+				var scope = this;
+				// Unhighlight via old select info
+				if (this._selectedPickInfo) {
+					this._selectedPickInfo.object.traverse(function(obj) {
+						if ( obj instanceof THREE.Mesh) {
+							obj.material = scope._defaultMaterial;
+						}
+					});
+				}
+
+				// Set new selection
+				this._selectedPickInfo = picked[0];
+				this._hasActiveSelection = true;
+				this._pickableSelectionObjects = [];
+
+				// this._pubsub.publish(this._appTopic, {
+				// type : "mainViewSelected",
+				// uuid : this._selectedPickInfo.object.uuid,
+				// });
+
+				this._selectedPickInfo.object.traverse(function(obj) {
+					if ( obj instanceof THREE.Mesh) {
+						obj.material = scope._materials.highlightMaterial;
+						this._pickableSelectionObjects.push(obj);
+					}
+				});
+				this._selectedPickInfo.object.material = this._materials.selectMaterial;
+
+			} else {
+				this._hasActiveSelection = false;
+				this._pickableSelectionObjects = [];
+				var scope = this;
+				this._rootModel.traverse(function(obj) {
+					if ( obj instanceof THREE.Mesh) {
+						obj.material = scope._defaultMaterial;
+					}
+				});
+			}
+
+			return defaultState;
+
 		}
-
-	};
-
-	var selectedState = {
-
 	};
 
 	var addState = {
@@ -75,8 +140,58 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 
 	};
 
+	var frameState = {
+
+	};
+
 	var transformState = {
 
+		// TODO Move message dispatch here, as it dispatches to all other states...
+		execute : function(msg) {
+			switch (msg.type) {
+				case 'mouseup':
+					handleMouseUp(msg);
+					break;
+				default:
+					return null;
+			}
+		},
+
+		handleMouseUp : function(event) {
+			var picked = this._doPick(this._pickableObjects, true);
+			// console.debug(picked);
+			if (picked.length > 0) {
+				var scope = this;
+				// Unhighlight via old select info
+				if (this._selectedPickInfo) {
+					this._selectedPickInfo.object.traverse(function(obj) {
+						if ( obj instanceof THREE.Mesh) {
+							obj.material = scope._defaultMaterial;
+						}
+					});
+				}
+
+				if (this._selectedPickInfo.object === this._rootModel) {
+					this._control.detach();
+					this._pubsub.publish(this._appTopic, {
+						type : "error",
+						error : "Root model can not be transformed. Please select a different part"
+					});
+				} else {
+					// Attach to picked objects parent group.
+					this._control.attach(this._selectedPickInfo.object.parent);
+				}
+
+			} else {
+				var scope = this;
+				this._rootModel.traverse(function(obj) {
+					if ( obj instanceof THREE.Mesh) {
+						obj.material = scope._defaultMaterial;
+					}
+				});
+			}
+
+		}
 	};
 
 	function MainViewScene(options) {
@@ -84,8 +199,9 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 
 		this._selectedPickInfo = null;
 		this._currentPartViewPick = null;
+		this._hasActiveSelection = false;
+		this._pickableSelectionObjects = [];
 
-		this._currentMode = MainViewScene.mode.normal;
 		this._currentState = defaultState;
 
 		this._control = new THREE.TransformControls(this._camera, this._renderer.domElement);
@@ -123,8 +239,8 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 
 		this.$super._keyboardHandler(event);
 
-		if (this._currentMode !== MainViewScene.mode.transform)
-			return;
+		// if (this._currentMode !== MainViewScene.mode.transform)
+		return;
 		//console.log(event.which);
 		switch ( event.keyCode ) {
 			case 81:
@@ -157,30 +273,38 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 
 	};
 
-	MainViewScene.prototype._handlePubsubMsg = function(msg) {
-		switch (msg.type) {
-			case 'partViewPick':
-				this._currentPartViewPick = msg;
-				break;
-			case MainViewScene.mode.transform:
-				this._currentMode = MainViewScene.mode.transform;
-				break;
-			case MainViewScene.mode.add:
-				this._currentMode = MainViewScene.mode.add;
-				// this._loadUrl(msg.child.url, this._addChildCallback.bind(this, msg));
-				break;
-			case MainViewScene.mode.remove:
-				this._currentMode = MainViewScene.mode.remove;
-				// this._loadUrl(msg.child.url, this._addChildCallback.bind(this, msg));
-				break;
-			case MainViewScene.mode.reset:
-				this._currentState = resetState.execute.call(this);
-				this._currentMode = MainViewScene.mode.reset;
-				break;
-			default:
-				console.log("Calling super...");
-				this.$super._handlePubsubMsg.call(this, msg);
+	MainViewScene.prototype._handleStateTransition = function(msg) {
+		var nextState = this._currentState.execute(msg);
+		while (nextState.automatic) {
+			nextState = nextState.execute(msg);
 		}
+		this._currentState = nextState;
+	};
+
+	MainViewScene.prototype._handlePubsubMsg = function(msg) {
+
+		this._handleStateTransition(msg);
+
+		//
+		// switch (msg.type) {
+		// case 'partViewPick':
+		// this._currentPartViewPick = msg;
+		// break;
+		// case MainViewScene.mode.transform:
+		// break;
+		// case MainViewScene.mode.add:
+		// // this._loadUrl(msg.child.url, this._addChildCallback.bind(this, msg));
+		// break;
+		// case MainViewScene.mode.remove:
+		// // this._loadUrl(msg.child.url, this._addChildCallback.bind(this, msg));
+		// break;
+		// case MainViewScene.mode.reset:
+		// this._currentState = resetState.execute.call(this);
+		// break;
+		// default:
+		// console.log("Calling super...");
+		// this.$super._handlePubsubMsg.call(this, msg);
+		// }
 	};
 
 	MainViewScene.prototype._handleMouseUp = function(event) {
@@ -191,76 +315,80 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		this._mouseDown = false;
 		if (this._pickEnabled === true && this._mouseMoved === false && event.button === 0) {
 			event.preventDefault();
-			var picked = this._doPick(this._pickableObjects, true);
-			// console.debug(picked);
-			if (picked.length > 0) {
-				var scope = this;
-				// Unhighlight via old select info
-				if (this._selectedPickInfo) {
-					this._selectedPickInfo.object.traverse(function(obj) {
-						if ( obj instanceof THREE.Mesh) {
-							obj.material = scope._defaultMaterial;
-						}
-					});
-				}
+			this._handleStateTransition(msg);
 
-				this._selectedPickInfo = picked[0];
-				// this._pubsub.publish(this._appTopic, {
-				// type : "mainViewSelected",
-				// uuid : this._selectedPickInfo.object.uuid,
-				// });
-
-				this._selectedPickInfo.object.traverse(function(obj) {
-					if ( obj instanceof THREE.Mesh) {
-						obj.material = scope._materials.highlightMaterial;
-					}
-				});
-				this._selectedPickInfo.object.material = this._materials.selectMaterial;
-
-				switch (this._currentMode) {
-
-					case MainViewScene.mode.transform:
-						if (this._selectedPickInfo.object === this._rootModel) {
-							this._control.detach();
-							this._pubsub.publish(this._appTopic, {
-								type : "error",
-								error : "Root model can not be transformed. Please select a different part"
-							});
-						} else {
-							// Attach to picked objects parent group.
-							this._control.attach(this._selectedPickInfo.object.parent);
-						}
-						break;
-					case MainViewScene.mode.add:
-						this._loadUrl(this._currentPartViewPick.url, this._addChildCallback.bind(this));
-						break;
-					case MainViewScene.mode.remove:
-						if (this._selectedPickInfo.object === this._rootModel) {
-							this._control.detach();
-							this._pubsub.publish(this._appTopic, {
-								type : "error",
-								error : "Root model can not be deleted"
-							});
-						} else {
-							var parent = this._selectedPickInfo.object.parent;
-							parent.remove(this._selectedPickInfo.object);
-							this._scene.remove(this._selectedPickInfo.object);
-							this._setPickableObjects(this._rootModel);
-							this._currentMode = MainViewScene.mode.normal;
-						}
-						break;
-					default:
-						break;
-				}
-
-			} else {
-				var scope = this;
-				this._rootModel.traverse(function(obj) {
-					if ( obj instanceof THREE.Mesh) {
-						obj.material = scope._defaultMaterial;
-					}
-				});
-			}
+			//
+			// event.preventDefault();
+			// var picked = this._doPick(this._pickableObjects, true);
+			// // console.debug(picked);
+			// if (picked.length > 0) {
+			// var scope = this;
+			// // Unhighlight via old select info
+			// if (this._selectedPickInfo) {
+			// this._selectedPickInfo.object.traverse(function(obj) {
+			// if ( obj instanceof THREE.Mesh) {
+			// obj.material = scope._defaultMaterial;
+			// }
+			// });
+			// }
+			//
+			// this._selectedPickInfo = picked[0];
+			// // this._pubsub.publish(this._appTopic, {
+			// // type : "mainViewSelected",
+			// // uuid : this._selectedPickInfo.object.uuid,
+			// // });
+			//
+			// this._selectedPickInfo.object.traverse(function(obj) {
+			// if ( obj instanceof THREE.Mesh) {
+			// obj.material = scope._materials.highlightMaterial;
+			// }
+			// });
+			// this._selectedPickInfo.object.material = this._materials.selectMaterial;
+			//
+			// switch (this._currentMode) {
+			//
+			// case MainViewScene.mode.transform:
+			// if (this._selectedPickInfo.object === this._rootModel) {
+			// this._control.detach();
+			// this._pubsub.publish(this._appTopic, {
+			// type : "error",
+			// error : "Root model can not be transformed. Please select a different part"
+			// });
+			// } else {
+			// // Attach to picked objects parent group.
+			// this._control.attach(this._selectedPickInfo.object.parent);
+			// }
+			// break;
+			// case MainViewScene.mode.add:
+			// this._loadUrl(this._currentPartViewPick.url, this._addChildCallback.bind(this));
+			// break;
+			// case MainViewScene.mode.remove:
+			// if (this._selectedPickInfo.object === this._rootModel) {
+			// this._control.detach();
+			// this._pubsub.publish(this._appTopic, {
+			// type : "error",
+			// error : "Root model can not be deleted"
+			// });
+			// } else {
+			// var parent = this._selectedPickInfo.object.parent;
+			// parent.remove(this._selectedPickInfo.object);
+			// this._scene.remove(this._selectedPickInfo.object);
+			// this._setPickableObjects(this._rootModel);
+			// this._currentMode = MainViewScene.mode.normal;
+			// }
+			// break;
+			// default:
+			// break;
+			// }
+			//
+			// } else {
+			// var scope = this;
+			// this._rootModel.traverse(function(obj) {
+			// if ( obj instanceof THREE.Mesh) {
+			// obj.material = scope._defaultMaterial;
+			// }
+			// });
+			// }
 		}
 	};
 
@@ -294,6 +422,23 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		} else {
 			console.log("Root model already set, ignoring");
 		}
+	};
+
+	MainViewScene.prototype._highlightPart = function(parentPart) {
+		parentPart.traverse(function(obj) {
+			if ( obj instanceof THREE.Mesh) {
+				obj.material = scope._materials.highlightMaterial;
+			}
+		});
+		parentPart.material = this._materials.selectMaterial;
+	};
+
+	MainViewScene.prototype._unhighlightPart = function(parentPart) {
+		parentPart.traverse(function(obj) {
+			if ( obj instanceof THREE.Mesh) {
+				obj.material = this._defaultMaterial;
+			}
+		});
 	};
 
 	MainViewScene.prototype._addChildCallback = function(url, geometry) {
