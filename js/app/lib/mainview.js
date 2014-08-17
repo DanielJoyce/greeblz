@@ -1,6 +1,8 @@
 define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzScene) {"use strict";
 
 	// var protoState = {
+	// scene: reference to mainview scene instance
+
 	// automatic: true/false
 	//
 	// // Return the next state at end of function.
@@ -19,181 +21,6 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	// }
 	// };
 
-	var defaultState = {
-
-		// TODO Move message dispatch here, as it dispatches to all other states...
-		execute : function(msg) {
-			switch (msg.type) {
-				case 'mouseup':
-					return selectState;
-					break;
-				default:
-					return null;
-			}
-		},
-	};
-
-	// var partPickState = {
-	//
-	// };
-
-	var resetState = {
-
-		// Execute this state immediately when returned
-		// from another state
-		automatic : true,
-
-		execute : function(msg) {
-			this.$super._reset.call(this);
-			this._pickableObjects = [];
-			this._currentMode = MainViewScene.mode.normal;
-			this._selectedPickInfo = null;
-			this._currentPartViewPick = null;
-			this._control.detach();
-			this._hasActiveSelection = false;
-			this._pickableSelectionObjects = [];
-			return defaultState;
-		}
-	};
-
-	var selectState = {
-		automatic : true,
-
-		execute : function(msg) {
-			switch (msg.type) {
-				case 'mouseup':
-					handleMouseUp(msg);
-					break;
-				default:
-					return null;
-			}
-		},
-
-		handleMouseUp : function(event) {
-			var picked = this._doPick(this._pickableObjects, true);
-			// Has selection changed?
-			if (picked.length > 0 && picked[0] !== this._selectedPickInfo.object) {
-				var scope = this;
-				// Unhighlight via old select info
-				if (this._selectedPickInfo) {
-					this._selectedPickInfo.object.traverse(function(obj) {
-						if ( obj instanceof THREE.Mesh) {
-							obj.material = scope._defaultMaterial;
-						}
-					});
-				}
-
-				// Set new selection
-				this._selectedPickInfo = picked[0];
-				this._hasActiveSelection = true;
-				this._pickableSelectionObjects = [];
-
-				// this._pubsub.publish(this._appTopic, {
-				// type : "mainViewSelected",
-				// uuid : this._selectedPickInfo.object.uuid,
-				// });
-
-				this._selectedPickInfo.object.traverse(function(obj) {
-					if ( obj instanceof THREE.Mesh) {
-						obj.material = scope._materials.highlightMaterial;
-						this._pickableSelectionObjects.push(obj);
-					}
-				});
-				this._selectedPickInfo.object.material = this._materials.selectMaterial;
-
-			} else {
-				this._hasActiveSelection = false;
-				this._pickableSelectionObjects = [];
-				var scope = this;
-				this._rootModel.traverse(function(obj) {
-					if ( obj instanceof THREE.Mesh) {
-						obj.material = scope._defaultMaterial;
-					}
-				});
-			}
-
-			return defaultState;
-
-		}
-	};
-
-	var addState = {
-
-	};
-
-	var cutState = {
-
-	};
-	var copyState = {
-
-	};
-
-	var pasteState = {
-
-	};
-
-	var mirrorState = {
-
-	};
-
-	var deleteState = {
-
-	};
-
-	var frameState = {
-
-	};
-
-	var transformState = {
-
-		// TODO Move message dispatch here, as it dispatches to all other states...
-		execute : function(msg) {
-			switch (msg.type) {
-				case 'mouseup':
-					handleMouseUp(msg);
-					break;
-				default:
-					return null;
-			}
-		},
-
-		handleMouseUp : function(event) {
-			var picked = this._doPick(this._pickableObjects, true);
-			// console.debug(picked);
-			if (picked.length > 0) {
-				var scope = this;
-				// Unhighlight via old select info
-				if (this._selectedPickInfo) {
-					this._selectedPickInfo.object.traverse(function(obj) {
-						if ( obj instanceof THREE.Mesh) {
-							obj.material = scope._defaultMaterial;
-						}
-					});
-				}
-
-				if (this._selectedPickInfo.object === this._rootModel) {
-					this._control.detach();
-					this._pubsub.publish(this._appTopic, {
-						type : "error",
-						error : "Root model can not be transformed. Please select a different part"
-					});
-				} else {
-					// Attach to picked objects parent group.
-					this._control.attach(this._selectedPickInfo.object.parent);
-				}
-
-			} else {
-				var scope = this;
-				this._rootModel.traverse(function(obj) {
-					if ( obj instanceof THREE.Mesh) {
-						obj.material = scope._defaultMaterial;
-					}
-				});
-			}
-
-		}
-	};
-
 	function MainViewScene(options) {
 		GreeblzScene.call(this, options);
 
@@ -202,13 +29,13 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		this._hasActiveSelection = false;
 		this._pickableSelectionObjects = [];
 
-		this._currentState = defaultState;
-
 		this._control = new THREE.TransformControls(this._camera, this._renderer.domElement);
 		//this._control.addEventListener('change', this._render.bind(this));
 		this._control.setSpace("local");
 
 		this._scene.add(this._control);
+
+		this._initStateMachine();
 
 	}
 
@@ -225,12 +52,199 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		scale : "SCALE",
 		normal : "NORMAL",
 		reset : "RESET",
-		transform : "TRANSFORM"
+		transform : "TRANSFORM",
+		frame : "FRAME",
+		setRootModel : "SET_ROOT_MODEL"
 	};
 
 	MainViewScene.prototype = common.inherit(GreeblzScene.prototype);
 
 	MainViewScene.prototype.constructor = GreeblzScene;
+
+	MainViewScene.prototype._initStateMachine = function() {
+
+		var scope = this;
+
+		var defaultState = {
+
+			view : scope,
+
+			// TODO Move message dispatch here, as it dispatches to all other states...
+			execute : function(msg) {
+				switch (msg.type) {
+					case 'mouseup':
+						return selectState;
+						break;
+					case MainViewScene.mode.reset:
+						return resetState;
+						break;
+					case MainViewScene.mode.transform:
+						return transformState;
+						break;
+					default:
+						return defaultState;
+				}
+			},
+		};
+
+		// var partPickState = {
+		//
+		// };
+
+		var setRootModelState = {
+			view : scope,
+			automatic : true,
+			execute : function(msg) {
+
+				return defaultState;
+			}
+		};
+
+		var resetState = {
+
+			view : scope,
+
+			// Execute this state immediately when returned
+			// from another state
+			automatic : true,
+
+			execute : function(msg) {
+				view.$super._reset.call(view);
+				view._pickableObjects = [];
+				view._currentMode = MainViewScene.mode.normal;
+				view._selectedPickInfo = null;
+				view._currentPartViewPick = null;
+				view._control.detach();
+				view._hasActiveSelection = false;
+				view._pickableSelectionObjects = [];
+				return defaultState;
+			}
+		};
+
+		var selectState = {
+			view : scope,
+
+			automatic : true,
+
+			execute : function(msg) {
+				switch (msg.type) {
+					case 'mouseup':
+						handleMouseUp(msg);
+						break;
+					default:
+						return defaultState;
+				}
+			},
+
+			handleMouseUp : function(event) {
+				var picked = view._doPick(view._pickableObjects, true);
+				// Has selection changed?
+				if (picked.length > 0 && picked[0] !== view._selectedPickInfo.object) {
+					var scope = view;
+					// Unhighlight via old select info
+					if (view._selectedPickInfo) {
+						view._selectedPickInfo.object.traverse(function(obj) {
+							if ( obj instanceof THREE.Mesh) {
+								obj.material = scope._defaultMaterial;
+							}
+						});
+					}
+					// Set new selection
+					view._selectedPickInfo = picked[0];
+					view._hasActiveSelection = true;
+					view._pickableSelectionObjects = [];
+					view._highlightPart(obj, true);
+				} else {
+					view._hasActiveSelection = false;
+					view._pickableSelectionObjects = [];
+					view._unhighlightPart(obj);
+				}
+				return defaultState;
+			}
+		};
+
+		var addState = {
+
+		};
+
+		var cutState = {
+
+		};
+		var copyState = {
+
+		};
+
+		var pasteState = {
+
+		};
+
+		var mirrorState = {
+
+		};
+
+		var deleteState = {
+
+		};
+
+		var frameState = {
+
+		};
+
+		var transformState = {
+
+			view : scope,
+
+			// TODO Move message dispatch here, as it dispatches to all other states...
+			execute : function(msg) {
+				switch (msg.type) {
+					case 'mouseup':
+						handleMouseUp(msg);
+						break;
+					default:
+						return defaultState;
+				}
+			},
+
+			handleMouseUp : function(event) {
+				var picked = view._doPick(view._pickableObjects, true);
+				// console.debug(picked);
+				if (picked.length > 0) {
+					var scope = view;
+					// Unhighlight via old select info
+					if (view._selectedPickInfo) {
+						view._selectedPickInfo.object.traverse(function(obj) {
+							if ( obj instanceof THREE.Mesh) {
+								obj.material = scope._defaultMaterial;
+							}
+						});
+					}
+
+					if (view._selectedPickInfo.object === view._rootModel) {
+						view._control.detach();
+						view._pubsub.publish(view._appTopic, {
+							type : "error",
+							error : "Root model can not be transformed. Please select a different part"
+						});
+					} else {
+						// Attach to picked objects parent group.
+						view._control.attach(view._selectedPickInfo.object.parent);
+					}
+
+				} else {
+					var scope = view;
+					view._rootModel.traverse(function(obj) {
+						if ( obj instanceof THREE.Mesh) {
+							obj.material = scope._defaultMaterial;
+						}
+					});
+				}
+
+			}
+		};
+
+		this._currentState = defaultState;
+
+	};
 
 	MainViewScene.prototype._keyboardHandler = function(event) {
 
@@ -424,12 +438,14 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		}
 	};
 
-	MainViewScene.prototype._highlightPart = function(parentPart) {
-		parentPart.traverse(function(obj) {
-			if ( obj instanceof THREE.Mesh) {
-				obj.material = scope._materials.highlightMaterial;
-			}
-		});
+	MainViewScene.prototype._highlightPart = function(parentPart, recursive) {
+		if (recursive) {
+			parentPart.traverse(function(obj) {
+				if ( obj instanceof THREE.Mesh) {
+					obj.material = scope._materials.highlightMaterial;
+				}
+			});
+		}
 		parentPart.material = this._materials.selectMaterial;
 	};
 
