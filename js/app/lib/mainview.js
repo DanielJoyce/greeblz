@@ -65,12 +65,22 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 
 		var scope = this;
 
+		// var protoState = {
+// 			
+			// nextState: function(msg){},
+// 			
+			// doOutput: function(msg){},
+// 			
+		// };
+
 		var defaultState = {
 
 			view : scope,
 
+	
+
 			// TODO Move message dispatch here, as it dispatches to all other states...
-			execute : function(msg) {
+			nextState : function(msg) {
 				switch (msg.type) {
 					case 'mouseup':
 						return selectState;
@@ -81,6 +91,14 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 					case MainViewScene.mode.transform:
 						return transformState;
 						break;
+					case MainViewScene.mode.setRootModel:
+						return setRootModelState;
+						break;
+					// case modelLoadComplete:
+						
+					// case "error":
+					// return errorState;
+					// break;
 					default:
 						return defaultState;
 				}
@@ -96,7 +114,29 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 			automatic : true,
 			execute : function(msg) {
 
-				return defaultState;
+				switch(msg.type) {
+					case MainViewScene.mode.setRootModel:
+						startLoad(msg);
+						// case "modelLoad":
+						return setRootModelState;
+					// break;
+					case "modelLoadComplete":
+						if (msg.loadType === "rootModel") {
+							setRootModel(msg);
+						}
+						return defaultState;
+					default:
+						return defaultState;
+				}
+			},
+
+			startLoad : function(msg) {
+				view._loadUrl(msg.url, "rootModel");
+
+			},
+
+			setRootModel : function(msg) {
+
 			}
 		};
 
@@ -130,7 +170,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 				switch (msg.type) {
 					case 'mouseup':
 						handleMouseUp(msg);
-						break;
+						return defaultState;
 					default:
 						return defaultState;
 				}
@@ -199,7 +239,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 				switch (msg.type) {
 					case 'mouseup':
 						handleMouseUp(msg);
-						break;
+						return transformState;
 					default:
 						return defaultState;
 				}
@@ -288,11 +328,21 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	};
 
 	MainViewScene.prototype._handleStateTransition = function(msg) {
-		var nextState = this._currentState.execute(msg);
+		
+		this._currentState.doOutput(msg);
+		var nextState = this._currentState.nextState(msg);
+		
 		while (nextState.automatic) {
+			nextState.doOutput(msg);
 			nextState = nextState.execute(msg);
 		}
 		this._currentState = nextState;
+		
+		// var nextState = this._currentState.execute(msg);
+		// while (nextState.automatic) {
+			// nextState = nextState.execute(msg);
+		// }
+		// this._currentState = nextState;
 	};
 
 	MainViewScene.prototype._handlePubsubMsg = function(msg) {
@@ -322,6 +372,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	};
 
 	MainViewScene.prototype._handleMouseUp = function(event) {
+
 		// Because we are using the transform tools
 		// we only want to perform a pick if this is a
 		// 'click' without the mouse moving at all
@@ -413,29 +464,12 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	 * @param {Object} centerObject
 	 */
 	MainViewScene.prototype._setRootModel = function(geometry, pickable, centered) {
-		if (this._rootModel == null) {
-			this._resetCamera();
-
-			this.$super._setRootModel.call(this, geometry, pickable, centered);
-
-			// var model = new THREE.Mesh(geometry, this._defaultMaterial);
-			// this._rootModel = model;
-			// this._scene.add(model);
-			// geometry.computeBoundingSphere();
-			// if (centered == true) {
-			// this._centerModel(model);
-			// }
-			// if (pickable) {
-			// this._pickableObjects.push(model);
-			// }
-			// // Frame model
-			// var distance = 1.2 * geometry.boundingSphere.radius / Math.sin(this.VIEW_ANGLE / 2.0);
-			// var vec = this._camera.position.clone().sub(new THREE.Vector3(0, 0, 0)).normalize();
-			// var position = vec.multiplyScalar(distance);
-			// this._camera.position = position;
-		} else {
-			console.log("Root model already set, ignoring");
-		}
+		// if (this._rootModel == null) {
+		this._resetCamera();
+		this.$super._setRootModel.call(this, geometry, pickable, centered);
+		// } else {
+		// console.log("Root model already set, ignoring");
+		// }
 	};
 
 	MainViewScene.prototype._highlightPart = function(parentPart, recursive) {
@@ -455,6 +489,45 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 				obj.material = this._defaultMaterial;
 			}
 		});
+	};
+
+	function _loadModel(modelUrl, loadType) {
+		//var dataType = msg.dataType;
+		var scope = this;
+
+		if (url == undefined || url == null) {
+			this._pubsub.publish(this._topic, {
+				type : "error",
+				msg : "No url specified"
+			});
+			this._pubsub.publish(this._appTopic, {
+				type : "error",
+				msg : "No url specified"
+			});
+		} else {
+			// TODO Use webworker in future
+			try {
+				this._loader.load(url, function() {
+					scope._pubsub.publish(scope._topic, {
+						type : "modelLoadComplete",
+						loadType : loadType,
+						status : "complete"
+					});
+				});
+			} catch(err) {
+				this._pubsub.publish(this._topic, {
+					type : "error",
+					msg : "Loader encountered error",
+					exception : err,
+				});
+				this._pubsub.publish(this._appTopic, {
+					type : "error",
+					msg : "Loader encountered error",
+					view : this,
+					exception : err,
+				});
+			}
+		}
 	};
 
 	MainViewScene.prototype._addChildCallback = function(url, geometry) {
