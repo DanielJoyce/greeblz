@@ -66,18 +66,32 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		var scope = this;
 
 		// var protoState = {
-// 			
-			// nextState: function(msg){},
-// 			
-			// doOutput: function(msg){},
-// 			
+		// Enter action only executed once when state changes
+		// enterAction: function(msg){}.
+		// Exit action only executed once when state changes
+		// exitAction: function(msg){},
+		// Input action executed for every input
+		// inputAction: function(msg){}
+		// Executed for every input, to see if state changes
+		// nextState: function(msg){},
 		// };
 
 		var defaultState = {
 
 			view : scope,
 
-	
+			inputAction : function(msg) {
+				switch (msg.type) {
+					case MainViewScene.mode.reset:
+						reset();
+						break;
+					case MainViewScene.mode.remove:
+						removePart();
+						break;
+					default:
+						break;
+				}
+			},
 
 			// TODO Move message dispatch here, as it dispatches to all other states...
 			nextState : function(msg) {
@@ -94,8 +108,11 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 					case MainViewScene.mode.setRootModel:
 						return setRootModelState;
 						break;
+					case "mouseup":
+						return partPickState;
+						break;
 					// case modelLoadComplete:
-						
+
 					// case "error":
 					// return errorState;
 					// break;
@@ -103,52 +120,8 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 						return defaultState;
 				}
 			},
-		};
 
-		// var partPickState = {
-		//
-		// };
-
-		var setRootModelState = {
-			view : scope,
-			automatic : true,
-			execute : function(msg) {
-
-				switch(msg.type) {
-					case MainViewScene.mode.setRootModel:
-						startLoad(msg);
-						// case "modelLoad":
-						return setRootModelState;
-					// break;
-					case "modelLoadComplete":
-						if (msg.loadType === "rootModel") {
-							setRootModel(msg);
-						}
-						return defaultState;
-					default:
-						return defaultState;
-				}
-			},
-
-			startLoad : function(msg) {
-				view._loadUrl(msg.url, "rootModel");
-
-			},
-
-			setRootModel : function(msg) {
-
-			}
-		};
-
-		var resetState = {
-
-			view : scope,
-
-			// Execute this state immediately when returned
-			// from another state
-			automatic : true,
-
-			execute : function(msg) {
+			reset : function() {
 				view.$super._reset.call(view);
 				view._pickableObjects = [];
 				view._currentMode = MainViewScene.mode.normal;
@@ -157,26 +130,33 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 				view._control.detach();
 				view._hasActiveSelection = false;
 				view._pickableSelectionObjects = [];
-				return defaultState;
+			},
+
+			removePart : function() {
+				if (this._selectedPickInfo.object === this._rootModel) {
+					this._control.detach();
+					this._pubsub.publish(this._appTopic, {
+						type : "error",
+						error : "Root model can not be deleted"
+					});
+				} else {
+					var parent = this._selectedPickInfo.object.parent;
+					parent.remove(this._selectedPickInfo.object);
+					this._scene.remove(this._selectedPickInfo.object);
+					this._setPickableObjects(this._rootModel);
+					this._currentMode = MainViewScene.mode.normal;
+				}
 			}
 		};
 
-		var selectState = {
-			view : scope,
-
+		var partPickState = {
 			automatic : true,
 
-			execute : function(msg) {
-				switch (msg.type) {
-					case 'mouseup':
-						handleMouseUp(msg);
-						return defaultState;
-					default:
-						return defaultState;
-				}
+			nextState : function(msg) {
+				return defaultState;
 			},
 
-			handleMouseUp : function(event) {
+			entryAction : function(event) {
 				var picked = view._doPick(view._pickableObjects, true);
 				// Has selection changed?
 				if (picked.length > 0 && picked[0] !== view._selectedPickInfo.object) {
@@ -194,12 +174,68 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 					view._hasActiveSelection = true;
 					view._pickableSelectionObjects = [];
 					view._highlightPart(obj, true);
+					this._pubsub.publish(this._appTopic, {
+						type : "partSelected",
+						value : true
+					});
 				} else {
 					view._hasActiveSelection = false;
 					view._pickableSelectionObjects = [];
 					view._unhighlightPart(obj);
+					this._pubsub.publish(this._appTopic, {
+						type : "partSelected",
+						value : false
+					});
 				}
-				return defaultState;
+			},
+		};
+
+		var setRootModelState = {
+			view : scope,
+
+			nextState : function(msg) {
+				switch(msg.type) {
+					case "modelLoadComplete":
+						return defaultState;
+						break;
+					default:
+						return setRootModelState;
+
+				}
+			},
+
+			entryAction : function(msg) {
+				// Set busy indicator
+			},
+
+			exitAction : function(msg) {
+				// Set root model
+
+				// Remove busy indicator
+			},
+
+			inputAction : function(msg) {
+				switch(msg.type) {
+					case MainViewScene.mode.setRootModel:
+						startLoad(msg);
+					// case "modelLoad":
+					// break;
+					case "modelLoadComplete":
+						if (msg.loadType === "rootModel") {
+							setRootModel(msg);
+						}
+					default:
+						break;
+				}
+			},
+
+			startLoad : function(msg) {
+				view._loadUrl(msg.url, "rootModel");
+
+			},
+
+			setRootModel : function(msg) {
+
 			}
 		};
 
@@ -328,47 +364,36 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	};
 
 	MainViewScene.prototype._handleStateTransition = function(msg) {
-		
-		this._currentState.doOutput(msg);
-		var nextState = this._currentState.nextState(msg);
-		
+
+		var nextState = processState(this._currentState);
 		while (nextState.automatic) {
-			nextState.doOutput(msg);
-			nextState = nextState.execute(msg);
+			nextState = processState(nextState);
 		}
 		this._currentState = nextState;
-		
-		// var nextState = this._currentState.execute(msg);
-		// while (nextState.automatic) {
-			// nextState = nextState.execute(msg);
-		// }
-		// this._currentState = nextState;
+	};
+
+	MainViewScene.prototype._processState = function(state, msg) {
+		var nextState = state.nextState(msg);
+
+		if (nextState !== state) {
+			if (state.exitAction) {
+				state.exitAction(msg);
+			}
+			if (nextState.enterAction) {
+				nextState.enterAction(msg);
+			}
+			return nextState;
+		} else {
+			if (state.inputAction) {
+				state.inputAction(msg);
+			}
+			return state;
+		}
 	};
 
 	MainViewScene.prototype._handlePubsubMsg = function(msg) {
 
 		this._handleStateTransition(msg);
-
-		//
-		// switch (msg.type) {
-		// case 'partViewPick':
-		// this._currentPartViewPick = msg;
-		// break;
-		// case MainViewScene.mode.transform:
-		// break;
-		// case MainViewScene.mode.add:
-		// // this._loadUrl(msg.child.url, this._addChildCallback.bind(this, msg));
-		// break;
-		// case MainViewScene.mode.remove:
-		// // this._loadUrl(msg.child.url, this._addChildCallback.bind(this, msg));
-		// break;
-		// case MainViewScene.mode.reset:
-		// this._currentState = resetState.execute.call(this);
-		// break;
-		// default:
-		// console.log("Calling super...");
-		// this.$super._handlePubsubMsg.call(this, msg);
-		// }
 	};
 
 	MainViewScene.prototype._handleMouseUp = function(event) {
