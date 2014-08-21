@@ -54,7 +54,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		reset : "RESET",
 		transform : "TRANSFORM",
 		frame : "FRAME",
-		setRootModel : "SET_ROOT_MODEL"
+		setRootModel : "setRootModel"
 	};
 
 	MainViewScene.prototype = common.inherit(GreeblzScene.prototype);
@@ -63,7 +63,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 
 	MainViewScene.prototype._initStateMachine = function() {
 
-		var scope = this;
+		var view = this;
 
 		// var protoState = {
 		// Enter action only executed once when state changes
@@ -78,8 +78,6 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 
 		var defaultState = {
 
-			view : scope,
-
 			inputAction : function(msg) {
 				switch (msg.type) {
 					case MainViewScene.mode.reset:
@@ -88,23 +86,26 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 					case MainViewScene.mode.remove:
 						removePart();
 						break;
+					case "error":
+						handleError(msg);
 					default:
 						break;
 				}
 			},
 
+			handleError : function(msg) {
+				scope._pubsub.publish(this._appTopic, msg);
+			},
+
 			// TODO Move message dispatch here, as it dispatches to all other states...
 			nextState : function(msg) {
 				switch (msg.type) {
-					case 'mouseup':
-						return selectState;
-						break;
 					case MainViewScene.mode.reset:
 						return resetState;
 						break;
-					case MainViewScene.mode.transform:
-						return transformState;
-						break;
+					// case MainViewScene.mode.transform:
+					// return transformState;
+					// break;
 					case MainViewScene.mode.setRootModel:
 						return setRootModelState;
 						break;
@@ -133,56 +134,57 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 			},
 
 			removePart : function() {
-				if (this._selectedPickInfo.object === this._rootModel) {
-					this._control.detach();
-					this._pubsub.publish(this._appTopic, {
+				if (view._selectedPickInfo.object === view._rootModel) {
+					view._control.detach();
+					view._pubsub.publish(view._appTopic, {
 						type : "error",
 						error : "Root model can not be deleted"
 					});
 				} else {
-					var parent = this._selectedPickInfo.object.parent;
-					parent.remove(this._selectedPickInfo.object);
-					this._scene.remove(this._selectedPickInfo.object);
-					this._setPickableObjects(this._rootModel);
-					this._currentMode = MainViewScene.mode.normal;
+					var parent = view._selectedPickInfo.object.parent;
+					parent.remove(view._selectedPickInfo.object);
+					view._scene.remove(view._selectedPickInfo.object);
+					view._setPickableObjects(view._rootModel);
+					view._currentMode = MainViewScene.mode.normal;
 				}
 			}
 		};
 
 		var partPickState = {
+
 			automatic : true,
 
 			nextState : function(msg) {
 				return defaultState;
 			},
 
-			entryAction : function(event) {
+			enterAction : function(event) {
 				var picked = view._doPick(view._pickableObjects, true);
 				// Has selection changed?
-				if (picked.length > 0 && picked[0] !== view._selectedPickInfo.object) {
+				if (picked.length > 0) {
 					var scope = view;
 					// Unhighlight via old select info
-					if (view._selectedPickInfo) {
-						view._selectedPickInfo.object.traverse(function(obj) {
-							if ( obj instanceof THREE.Mesh) {
-								obj.material = scope._defaultMaterial;
-							}
-						});
+					if (view._selectedPickInfo && picked[0] !== view._selectedPickInfo) {
+						view._unhighlightPart(view._selectedPickInfo.object);
 					}
 					// Set new selection
 					view._selectedPickInfo = picked[0];
 					view._hasActiveSelection = true;
 					view._pickableSelectionObjects = [];
-					view._highlightPart(obj, true);
-					this._pubsub.publish(this._appTopic, {
+					view._highlightPart(view._selectedPickInfo.object, true);
+					view._pubsub.publish(view._appTopic, {
 						type : "partSelected",
 						value : true
 					});
-				} else {
+				}
+				if (picked.length == 0) {
+					if (view._selectedPickInfo) {
+						view._unhighlightPart(view._selectedPickInfo.object);
+						view._selectedPickInfo = null;
+					}
 					view._hasActiveSelection = false;
 					view._pickableSelectionObjects = [];
-					view._unhighlightPart(obj);
-					this._pubsub.publish(this._appTopic, {
+					view._pubsub.publish(view._appTopic, {
 						type : "partSelected",
 						value : false
 					});
@@ -191,7 +193,6 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		};
 
 		var setRootModelState = {
-			view : scope,
 
 			nextState : function(msg) {
 				switch(msg.type) {
@@ -200,42 +201,32 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 						break;
 					default:
 						return setRootModelState;
-
 				}
 			},
 
-			entryAction : function(msg) {
-				// Set busy indicator
-			},
-
-			exitAction : function(msg) {
-				// Set root model
-
-				// Remove busy indicator
-			},
-
-			inputAction : function(msg) {
+			enterAction : function(msg) {
 				switch(msg.type) {
 					case MainViewScene.mode.setRootModel:
-						startLoad(msg);
-					// case "modelLoad":
-					// break;
-					case "modelLoadComplete":
-						if (msg.loadType === "rootModel") {
-							setRootModel(msg);
-						}
+						this.startLoad(msg);
 					default:
 						break;
 				}
 			},
 
-			startLoad : function(msg) {
-				view._loadUrl(msg.url, "rootModel");
+			exitAction : function(msg) {
+				// Remove busy indicator
+				// Set root model
+				// if (msg.loadType === "rootModel") {
+				this.setRootModel(msg);
+				// }
+			},
 
+			startLoad : function(msg) {
+				view._loadModel(msg.url, "rootModel");
 			},
 
 			setRootModel : function(msg) {
-
+				view._setRootModel(msg.geometry, true, true);
 			}
 		};
 
@@ -268,8 +259,6 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 
 		var transformState = {
 
-			view : scope,
-
 			// TODO Move message dispatch here, as it dispatches to all other states...
 			execute : function(msg) {
 				switch (msg.type) {
@@ -285,7 +274,6 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 				var picked = view._doPick(view._pickableObjects, true);
 				// console.debug(picked);
 				if (picked.length > 0) {
-					var scope = view;
 					// Unhighlight via old select info
 					if (view._selectedPickInfo) {
 						view._selectedPickInfo.object.traverse(function(obj) {
@@ -307,10 +295,9 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 					}
 
 				} else {
-					var scope = view;
 					view._rootModel.traverse(function(obj) {
 						if ( obj instanceof THREE.Mesh) {
-							obj.material = scope._defaultMaterial;
+							obj.material = view._defaultMaterial;
 						}
 					});
 				}
@@ -364,10 +351,11 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	};
 
 	MainViewScene.prototype._handleStateTransition = function(msg) {
-
-		var nextState = processState(this._currentState);
+		var nextState = this._processState(this._currentState, msg);
+		//console.log(nextState);
 		while (nextState.automatic) {
-			nextState = processState(nextState);
+			nextState = this._processState(nextState, msg);
+			console.log(nextState);
 		}
 		this._currentState = nextState;
 	};
@@ -376,14 +364,18 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		var nextState = state.nextState(msg);
 
 		if (nextState !== state) {
+			//console.log("Changing states!");
 			if (state.exitAction) {
+				//console.log("Exit Action!");
 				state.exitAction(msg);
 			}
 			if (nextState.enterAction) {
+				//console.log("Enter Action!");
 				nextState.enterAction(msg);
 			}
 			return nextState;
 		} else {
+			//console.log("Doing input for state");
 			if (state.inputAction) {
 				state.inputAction(msg);
 			}
@@ -405,80 +397,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		this._mouseDown = false;
 		if (this._pickEnabled === true && this._mouseMoved === false && event.button === 0) {
 			event.preventDefault();
-			this._handleStateTransition(msg);
-
-			//
-			// event.preventDefault();
-			// var picked = this._doPick(this._pickableObjects, true);
-			// // console.debug(picked);
-			// if (picked.length > 0) {
-			// var scope = this;
-			// // Unhighlight via old select info
-			// if (this._selectedPickInfo) {
-			// this._selectedPickInfo.object.traverse(function(obj) {
-			// if ( obj instanceof THREE.Mesh) {
-			// obj.material = scope._defaultMaterial;
-			// }
-			// });
-			// }
-			//
-			// this._selectedPickInfo = picked[0];
-			// // this._pubsub.publish(this._appTopic, {
-			// // type : "mainViewSelected",
-			// // uuid : this._selectedPickInfo.object.uuid,
-			// // });
-			//
-			// this._selectedPickInfo.object.traverse(function(obj) {
-			// if ( obj instanceof THREE.Mesh) {
-			// obj.material = scope._materials.highlightMaterial;
-			// }
-			// });
-			// this._selectedPickInfo.object.material = this._materials.selectMaterial;
-			//
-			// switch (this._currentMode) {
-			//
-			// case MainViewScene.mode.transform:
-			// if (this._selectedPickInfo.object === this._rootModel) {
-			// this._control.detach();
-			// this._pubsub.publish(this._appTopic, {
-			// type : "error",
-			// error : "Root model can not be transformed. Please select a different part"
-			// });
-			// } else {
-			// // Attach to picked objects parent group.
-			// this._control.attach(this._selectedPickInfo.object.parent);
-			// }
-			// break;
-			// case MainViewScene.mode.add:
-			// this._loadUrl(this._currentPartViewPick.url, this._addChildCallback.bind(this));
-			// break;
-			// case MainViewScene.mode.remove:
-			// if (this._selectedPickInfo.object === this._rootModel) {
-			// this._control.detach();
-			// this._pubsub.publish(this._appTopic, {
-			// type : "error",
-			// error : "Root model can not be deleted"
-			// });
-			// } else {
-			// var parent = this._selectedPickInfo.object.parent;
-			// parent.remove(this._selectedPickInfo.object);
-			// this._scene.remove(this._selectedPickInfo.object);
-			// this._setPickableObjects(this._rootModel);
-			// this._currentMode = MainViewScene.mode.normal;
-			// }
-			// break;
-			// default:
-			// break;
-			// }
-			//
-			// } else {
-			// var scope = this;
-			// this._rootModel.traverse(function(obj) {
-			// if ( obj instanceof THREE.Mesh) {
-			// obj.material = scope._defaultMaterial;
-			// }
-			// });
-			// }
+			this._handleStateTransition(event);
 		}
 	};
 
@@ -498,6 +417,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	};
 
 	MainViewScene.prototype._highlightPart = function(parentPart, recursive) {
+		var scope = this;
 		if (recursive) {
 			parentPart.traverse(function(obj) {
 				if ( obj instanceof THREE.Mesh) {
@@ -509,14 +429,15 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	};
 
 	MainViewScene.prototype._unhighlightPart = function(parentPart) {
+		var scope = this;
 		parentPart.traverse(function(obj) {
 			if ( obj instanceof THREE.Mesh) {
-				obj.material = this._defaultMaterial;
+				obj.material = scope._defaultMaterial;
 			}
 		});
 	};
 
-	function _loadModel(modelUrl, loadType) {
+	MainViewScene.prototype._loadModel = function(url, loadType) {
 		//var dataType = msg.dataType;
 		var scope = this;
 
@@ -525,30 +446,24 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 				type : "error",
 				msg : "No url specified"
 			});
-			this._pubsub.publish(this._appTopic, {
-				type : "error",
-				msg : "No url specified"
-			});
 		} else {
 			// TODO Use webworker in future
 			try {
-				this._loader.load(url, function() {
+				var callback = function(geometry) {
 					scope._pubsub.publish(scope._topic, {
 						type : "modelLoadComplete",
+						url : url,
 						loadType : loadType,
+						geometry : geometry,
 						status : "complete"
 					});
-				});
+				};
+
+				this._loader.load(url, callback);
 			} catch(err) {
 				this._pubsub.publish(this._topic, {
 					type : "error",
 					msg : "Loader encountered error",
-					exception : err,
-				});
-				this._pubsub.publish(this._appTopic, {
-					type : "error",
-					msg : "Loader encountered error",
-					view : this,
 					exception : err,
 				});
 			}
