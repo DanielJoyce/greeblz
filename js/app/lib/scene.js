@@ -263,7 +263,6 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			if (centered == true) {
 				this._centerModel(model);
 			}
-			console.log(model.position);
 			if (pickable) {
 				this._setPickableObjects(model);
 			}
