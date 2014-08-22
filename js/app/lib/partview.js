@@ -42,7 +42,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'applib/scene'], function
 		if (this._pickEnabled === true && this._mouseMoved === false && event.button === 0) {
 			this._pickWidget.visible = true;
 			event.preventDefault();
-			var picked = this._doPick([this._rootModel], true);
+			var picked = this._doPick(event,[this._rootModel], true);
 			// console.debug(picked);
 			if (picked.length > 0) {
 				console.debug("HIT!");

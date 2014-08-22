@@ -89,7 +89,7 @@ define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib
 
 				case "partViewPick":
 					this._pubsub.publish(this._mainViewTopic, {
-						type : "partViewPick",
+						type : MainViewScene.mode.partViewPick,
 						url : msg.url,
 						point : msg.point,
 						normal : msg.normal
