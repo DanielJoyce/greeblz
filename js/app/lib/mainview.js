@@ -160,6 +160,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		};
 
 		var defaultState = new DefaultState();
+		this._defaultState = defaultState;
 
 		function PickState() {
 
@@ -258,6 +259,10 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 			this.nextState = function(msg) {
 				switch(msg.type) {
 					case "addComplete":
+						if (view._selectedPickInfo) {
+							view._unhighlightPart(view._rootModel,true);
+							view._highlightPart(view._selectedPickInfo.object, true);
+						}
 						return defaultState;
 						break;
 					default:
@@ -304,13 +309,13 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 			// TODO Need to store state locally when
 
 			// this.exitAction = function(msg) {
-				// // TODO Remove busy indicator
-				// // Set root model
-				// // if (msg.loadType === "rootModel") {
-// 
-				// // }
-				// this.addModel(msg);
-// 
+			// // TODO Remove busy indicator
+			// // Set root model
+			// // if (msg.loadType === "rootModel") {
+			//
+			// // }
+			// this.addModel(msg);
+			//
 			// };
 
 			this.startLoad = function(msg) {
@@ -438,11 +443,24 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 	};
 
 	MainViewScene.prototype._handleStateTransition = function(msg) {
-		var nextState = this._processState(this._currentState, msg);
-		console.log(nextState);
-		while (nextState.automatic) {
-			nextState = this._processState(nextState, msg);
+		var nextState = null;
+		try {
+			nextState = this._processState(this._currentState, msg);
 			console.log(nextState);
+			while (nextState.automatic) {
+				nextState = this._processState(nextState, msg);
+				console.log(nextState);
+			}
+		} catch(err) {
+			console.group("MAIN VIEW STATE ERROR");
+			console.log("Error transitioning states");
+			console.log("Current State:");
+			console.log(this._currentState);
+			console.log("Message that caused problem:");
+			console.log(msg);
+			console.log("Returning to default state");
+			console.groupEnd("STATE ERROR");
+			nextState = this._defaultState;
 		}
 		this._currentState = nextState;
 	};
