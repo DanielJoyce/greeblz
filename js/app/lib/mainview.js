@@ -55,7 +55,10 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		reset : "RESET",
 		transform : "TRANSFORM",
 		frame : "FRAME",
-		setRootModel : "setRootModel"
+		setRootModel : "setRootModel",
+		rootModelSet : "rootModelSet",
+		modelDisposed : "modelDisposed",
+		partSelected : "partSelected",
 	};
 
 	MainViewScene.prototype = common.inherit(GreeblzScene.prototype);
@@ -181,13 +184,16 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 					}
 					// Set new selection
 					view._selectedPickInfo = picked[0];
-					view._hasActiveSelection = true;
-					view._pickableSelectionObjects = [];
-					view._highlightPart(view._selectedPickInfo.object, true);
-					view._pubsub.publish(view._appTopic, {
-						type : "partSelected",
-						value : true
-					});
+					// Root can never be selected
+					if (view._selectedPickInfo.object !== view._rootModel) {
+						view._hasActiveSelection = true;
+						view._pickableSelectionObjects = [];
+						view._highlightPart(view._selectedPickInfo.object, true);
+						view._pubsub.publish(view._appTopic, {
+							type : "partSelected",
+							value : true
+						});
+					}
 				}
 				if (picked.length == 0) {
 					if (view._selectedPickInfo) {
@@ -239,6 +245,9 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 					// Set root model
 					// if (msg.loadType === "rootModel") {
 					this.setRootModel(msg);
+					this._pubsub.publish(this._appTopic, {
+						type : "rootModelSet"
+					});
 					// }
 				}
 			};
@@ -260,7 +269,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 				switch(msg.type) {
 					case "addComplete":
 						if (view._selectedPickInfo) {
-							view._unhighlightPart(view._rootModel,true);
+							view._unhighlightPart(view._rootModel, true);
 							view._highlightPart(view._selectedPickInfo.object, true);
 						}
 						return defaultState;
