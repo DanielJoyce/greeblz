@@ -1,92 +1,55 @@
 define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib/hardpoint', 'applib/pubsub', 'applib/command', 'lib/THREEx.FullScreen', 'lib/THREEx.WindowResize', 'lib/OrbitControls', 'lib/TransformControls'], function($, MainViewScene, PartViewScene, common, Hardpoint, PubSub, commands) {"use strict";
 
-	function ButtonManager() {
+	function ButtonManager(scope) {
 		this._frameButton = $("#framePart");
 		this._transformButton = $("#transformPart");
 		this._addPartButton = $("#addPart");
 		this._cutPartButton = $("#cutPart");
 		this._copyPartButton = $("#copyPart");
-		this._removePartButton = $("#addPart");
-		this._saveFigureButton = $("saveFigure");
-		this._settingsButton = $("settings");
-		this._trashFigureButton = $("trashFigure");
+		this._removePartButton = $("#removePart");
+		this._saveFigureButton = $("#saveFigure");
+		this._settingsButton = $("#settings");
+		this._trashFigureButton = $("#trashFigure");
 
-		this._transformButton.click(this._transformPartHandler.bind(this));
-		this._addPartButton.click(this._addPartHandler.bind(this));
-		this._cutPartButton.click(this._buttonHandler);
-		this._copyPartButton.click(this._buttonHandler);
-		this._removePartButton.click(this._removePartHandler.bind(this));
-		this._saveFigureButton.click(this._saveFigureHandler.bind(this));
-		this._settingsButton.click(this._settingsHandler.bind(this));
-		this._trashFigureButton.click(this._trashFigureHandler.bind(this));
-
-		this._partViewPick = false;
-		this._hasRootModel = false;
-
-		this._handleMsg = function() {
-			this.reset();
-			switch(msg.type) {
-				case "modelDisposed":
-					this._hasRootModel = false;
-					break;
-				case "partViewPick":
-					if (msg.pick) {
-						this._partViewPick = true;
-					} else {
-						this._partViewPick = false;
-					}
-					break;
-				case "rootModelSet":
-					this._hasRootModel = true;
-					break;
-				default:
-					break;
-			}
-			if (this._hasRootModel && this._partViewPick) {
-				this._enableEditing();
-			}
-		};
+		this._transformButton.click(scope._transformPartHandler.bind(scope));
+		this._addPartButton.click(scope._addPartHandler.bind(scope));
+		this._cutPartButton.click(scope._buttonHandler);
+		this._copyPartButton.click(scope._buttonHandler);
+		this._removePartButton.click(scope._removePartHandler.bind(scope));
+		this._saveFigureButton.click(scope._saveFigureHandler.bind(scope));
+		this._settingsButton.click(scope._settingsHandler.bind(scope));
+		this._trashFigureButton.click(scope._trashFigureHandler.bind(scope));
 
 		this.reset = function() {
+			this._frameButton.prop("disabled", true);
 			this._transformButton.prop("disabled", true);
 			this._addPartButton.prop("disabled", true);
 			this._cutPartButton.prop("disabled", true);
 			this._copyPartButton.prop("disabled", true);
 			this._removePartButton.prop("disabled", true);
-			this._saveFigureButton.prop("disabled", true);
+			this._saveFigureButton.prop("disabled", false);
 			this._settingsButton.prop("disabled", false);
-			this._trashFigureButton.prop("disabled", true);
+			this._trashFigureButton.prop("disabled", false);
 		};
 
 		// this.
 
-		this._enableEditing = function() {
-			this._transformButton.prop("disabled", false);
+		this.enableEditing = function() {
 			this._addPartButton.prop("disabled", false);
-			this._cutPartButton.prop("disabled", true);
-			this._copyPartButton.prop("disabled", true);
-			this._removePartButton.prop("disabled", true);
-			this._saveFigureButton.prop("disabled", true);
-			this._settingsButton.prop("disabled", false);
-			this._trashFigureButton.prop("disabled", true);
 		};
 
-		this._enableTransform = function() {
+		this.enablePickRequiredButtons = function() {
+			this._frameButton.prop("disabled", false);
 			this._transformButton.prop("disabled", false);
+			this._cutPartButton.prop("disabled", false);
+			this._copyPartButton.prop("disabled", false);
+			this._removePartButton.prop("disabled", false);
+			this._settingsButton.prop("disabled", false);
 		};
 
 	}
 
 	function GreeblzEditor() {
-
-		$("#transformPart").click(this._transformPartHandler.bind(this));
-		$("#addPart").click(this._addPartHandler.bind(this));
-		$("#cutPart").click(this._buttonHandler);
-		$("#copyPart").click(this._buttonHandler);
-		$("#removePart").click(this._removePartHandler.bind(this));
-		$("#saveFigure").click(this._saveFigureHandler.bind(this));
-		$("#settings").click(this._settingsHandler.bind(this));
-		$("#trashFigure").click(this._trashFigureHandler.bind(this));
 
 		$("#search-results > ol > li > a").click(this._searchResultClickHandler.bind(this));
 
@@ -130,6 +93,10 @@ define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib
 
 		this._pubsub.subscribe(this._appTopic, this._handleAppTopic.bind(this));
 
+		this._partViewPick = false;
+		this._hasRootModel = false;
+		this._partSelected = false;
+		this._buttonManager = new ButtonManager(this);
 	};
 
 	GreeblzEditor.prototype = {
@@ -146,25 +113,10 @@ define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib
 			console.groupEnd();
 
 			switch (msg.type) {
-				// case "mainViewSelected":
-				// if (this._currentPartSelection.pickPoint && this._currentPartSelection.pickNormal) {
-				// this._pubsub.publish(this._mainViewTopic, {
-				// type : MainViewScene.mode.add,
-				// parent : {
-				// uuid : msg.uuid,
-				// },
-				// child : {
-				// url : this._currentPartSelection.url,
-				// point : this._currentPartSelection.pickPoint.clone(),
-				// normal : this._currentPartSelection.pickNormal.clone()
-				// }
-				// });
-				// }
-				// break;
+
 				case "error" :
 					alert(msg.error);
 					break;
-
 				case "partViewPick":
 					if (msg.pick) {
 						this._pubsub.publish(this._mainViewTopic, {
@@ -173,11 +125,33 @@ define(['jquery', 'applib/mainview', 'applib/partview', 'applib/common', 'applib
 							point : msg.pick.point,
 							normal : msg.pick.normal
 						});
+						this._partViewPick = true;
+						console.log("HAS PART VIEW PICK");
+					} else {
+						this._partViewPick = false;
 					}
 					break;
-
+				case "partSelected":
+					this._partSelected = msg.value;
+					break;
+				case "modelDisposed":
+					this._hasRootModel = false;
+					break;
+				case "rootModelSet":
+					this._hasRootModel = true;
+					console.log("HAS ROOT MODEL");
+					break;
+				default:
+					break;
 			}
-
+			this._buttonManager.reset();
+			if (this._hasRootModel && this._partViewPick) {
+				console.log("ENABLE EDIT!");
+				this._buttonManager.enableEditing();
+			}
+			if (this._partSelected) {
+				this._buttonManager.enablePickRequiredButtons();
+			}
 		},
 
 		_addModelToScene : function(msg) {

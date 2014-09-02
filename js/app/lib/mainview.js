@@ -158,6 +158,10 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 					view._scene.remove(view._selectedPickInfo.object);
 					view._setPickableObjects(view._rootModel);
 					view._currentMode = MainViewScene.mode.normal;
+					view._pubsub.publish(view._appTopic, {
+						type : "partSelected",
+						value : false
+					});
 				}
 			};
 		};
@@ -185,15 +189,13 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 					// Set new selection
 					view._selectedPickInfo = picked[0];
 					// Root can never be selected
-					if (view._selectedPickInfo.object !== view._rootModel) {
-						view._hasActiveSelection = true;
-						view._pickableSelectionObjects = [];
-						view._highlightPart(view._selectedPickInfo.object, true);
-						view._pubsub.publish(view._appTopic, {
-							type : "partSelected",
-							value : true
-						});
-					}
+					view._hasActiveSelection = true;
+					view._pickableSelectionObjects = [];
+					view._highlightPart(view._selectedPickInfo.object, true);
+					view._pubsub.publish(view._appTopic, {
+						type : "partSelected",
+						value : true
+					});
 				}
 				if (picked.length == 0) {
 					if (view._selectedPickInfo) {
@@ -245,7 +247,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 					// Set root model
 					// if (msg.loadType === "rootModel") {
 					this.setRootModel(msg);
-					this._pubsub.publish(this._appTopic, {
+					view._pubsub.publish(view._appTopic, {
 						type : "rootModelSet"
 					});
 					// }
@@ -462,6 +464,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 			}
 		} catch(err) {
 			console.group("MAIN VIEW STATE ERROR");
+			console.error(err);
 			console.log("Error transitioning states");
 			console.log("Current State:");
 			console.log(this._currentState);

@@ -46,8 +46,8 @@ define(['jquery'], function($) {"use strict";
 					var msg = undefined;
 					while ( msg = msgs.shift()) {
 						// for (var i = 0; i < msg_queue.length; i++) {
-						console.debug("Fire Message:");
-						console.debug(msg);
+						// console.debug("Fire Message:");
+						// console.debug(msg);
 						callbacks.fire(msg);
 					}
 				}
@@ -110,8 +110,8 @@ define(['jquery'], function($) {"use strict";
 				msg_queue = [];
 				this._messages[topic] = msg_queue;
 			}
-			console.log("PUBLISH:");
-			console.log(msg);
+			// console.log("PUBLISH:");
+			// console.log(msg);
 			msg_queue.push(msg);
 		}
 		// msgsToFire = true;
