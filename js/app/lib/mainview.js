@@ -72,6 +72,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		var setRootModelState = null;
 		var pickState = null;
 		var addState = null;
+		var transformState = null;
 
 		// var protoState = {
 		// Enter action only executed once when state changes
@@ -120,6 +121,9 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 						break;
 					case MainViewScene.mode.add:
 						return addState;
+						break;
+					case MainViewScene.mode.transform:
+						return transformState;
 						break;
 					case "mouseup":
 						return pickState;
@@ -360,53 +364,85 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 
 		};
 
-		var transformState = {
+		function TransformState() {
 
 			// TODO Move message dispatch here, as it dispatches to all other states...
-			execute : function(msg) {
-				switch (msg.type) {
-					case 'mouseup':
-						handleMouseUp(msg);
+			this.nextState = function(msg) {
+				console.log(msg);
+				switch(msg.type) {
+					case MainViewScene.mode.transform:
+					case "mouseup":
 						return transformState;
+					// break;
 					default:
 						return defaultState;
+					// break;
 				}
-			},
+			};
 
-			handleMouseUp : function(event) {
-				var picked = view._doPick(view._pickableObjects, true);
-				// console.debug(picked);
+			this.inputAction = function(msg) {
+				switch(msg.type) {
+					case "mouseup":
+						this.handleMouseUp(msg);
+						break;
+					default:
+						break;
+				}
+			};
+
+			this.exitAction = function(msg) {
+				view._control.detach();
+			};
+
+			this.handleMouseUp = function(event) {
+				console.log("DERP!");
+				var picked = view._doPick(event, view._pickableObjects, true);
+				// Has selection changed?
 				if (picked.length > 0) {
+					var scope = view;
 					// Unhighlight via old select info
-					if (view._selectedPickInfo) {
-						view._selectedPickInfo.object.traverse(function(obj) {
-							if ( obj instanceof THREE.Mesh) {
-								obj.material = scope._defaultMaterial;
-							}
-						});
+					if (view._selectedPickInfo && picked[0] !== view._selectedPickInfo) {
+						view._unhighlightPart(view._selectedPickInfo.object);
 					}
+					// Set new selection
+					view._selectedPickInfo = picked[0];
+					view._hasActiveSelection = true;
+					view._pickableSelectionObjects = [];
+					view._highlightPart(view._selectedPickInfo.object, true);
+					view._pubsub.publish(view._appTopic, {
+						type : "partSelected",
+						value : true
+					});
 
 					if (view._selectedPickInfo.object === view._rootModel) {
+						console.log("TRANSFORM ERROR!");
 						view._control.detach();
 						view._pubsub.publish(view._appTopic, {
 							type : "error",
 							error : "Root model can not be transformed. Please select a different part"
 						});
 					} else {
-						// Attach to picked objects parent group.
 						view._control.attach(view._selectedPickInfo.object.parent);
 					}
 
-				} else {
-					view._rootModel.traverse(function(obj) {
-						if ( obj instanceof THREE.Mesh) {
-							obj.material = view._defaultMaterial;
-						}
+				}
+				if (picked.length == 0) {
+					view._control.detach();
+					if (view._selectedPickInfo) {
+						view._unhighlightPart(view._selectedPickInfo.object);
+						view._selectedPickInfo = null;
+					}
+					view._hasActiveSelection = false;
+					view._pickableSelectionObjects = [];
+					view._pubsub.publish(view._appTopic, {
+						type : "partSelected",
+						value : false
 					});
 				}
-
-			}
+			};
 		};
+
+		transformState = new TransformState();
 
 		this._currentState = defaultState;
 
@@ -419,8 +455,10 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 
 		this.$super._keyboardHandler(event);
 
-		// if (this._currentMode !== MainViewScene.mode.transform)
-		return;
+		// if (this._currentState !== MainViewScene.mode.transform)
+			// return;
+			
+		// TODO Add to state handling framework
 		//console.log(event.which);
 		switch ( event.keyCode ) {
 			case 81:
@@ -429,7 +467,7 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 				break;
 			case 87:
 				// W
-				this._control.setMode("move");
+				this._control.setMode("translate");
 				break;
 			case 69:
 				// E
@@ -471,15 +509,19 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 			console.log("Message that caused problem:");
 			console.log(msg);
 			console.log("Returning to default state");
-			console.groupEnd("STATE ERROR");
+			console.groupEnd();
 			nextState = this._defaultState;
 		}
 		this._currentState = nextState;
 	};
 
 	MainViewScene.prototype._processState = function(state, msg) {
+		console.group("PROCESSING STATE");
 		var nextState = state.nextState(msg);
-
+		console.log("CURRENT STATE");
+		console.log(state);
+		console.log("NEXT STATE");
+		console.log(nextState);
 		if (nextState !== state) {
 			console.log("Changing states!");
 			if (state.exitAction) {
@@ -487,21 +529,23 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 				state.exitAction(msg);
 			}
 			if (nextState.inputAction) {
-
+				console.log("processing input action");
 				nextState.inputAction(msg);
 			}
 			if (nextState.enterAction) {
 				console.log("Enter Action!");
 				nextState.enterAction(msg);
 			}
-			return nextState;
 		} else {
 			console.log("Doing input for state");
 			if (state.inputAction) {
+				console.log("processing input action");
 				state.inputAction(msg);
 			}
-			return state;
+			nextState = state;
 		}
+		console.groupEnd();
+		return nextState;
 	};
 
 	MainViewScene.prototype._handlePubsubMsg = function(msg) {
