@@ -228,31 +228,22 @@
 
 			arrowGeometry.merge(mesh.geometry, mesh.matrix);
 
-			var lineXGeometry = new THREE.Geometry();
-			lineXGeometry.vertices.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 0, 0));
-
-			var lineYGeometry = new THREE.Geometry();
-			lineYGeometry.vertices.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0));
-
-			var lineZGeometry = new THREE.Geometry();
-			lineZGeometry.vertices.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 1));
-
 			this.handleGizmos = {
 				X : [[new THREE.Mesh(arrowGeometry, new GizmoMaterial({
 					color : 0xff0000
-				})), [0.5, 0, 0], [0, 0, -Math.PI / 2]], [new THREE.Line(lineXGeometry, new GizmoLineMaterial({
-					color : 0xff0000
-				}))]],
+				})), [0.5, 0, 0], [0, 0, -Math.PI / 2]], [new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 1, 6, 1, false), new GizmoMaterial({
+					color : 0xff0000,
+				})), [0.5, 0, 0], [0, 0, -Math.PI / 2]]],
 				Y : [[new THREE.Mesh(arrowGeometry, new GizmoMaterial({
 					color : 0x00ff00
-				})), [0, 0.5, 0]], [new THREE.Line(lineYGeometry, new GizmoLineMaterial({
-					color : 0x00ff00
-				}))]],
+				})), [0, 0.5, 0]], [new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 1, 6, 1, false), new GizmoMaterial({
+					color : 0x00ff00,
+				})), [0, 0.5, 0]]],
 				Z : [[new THREE.Mesh(arrowGeometry, new GizmoMaterial({
 					color : 0x0000ff
-				})), [0, 0, 0.5], [Math.PI / 2, 0, 0]], [new THREE.Line(lineZGeometry, new GizmoLineMaterial({
-					color : 0x0000ff
-				}))]],
+				})), [0, 0, 0.5], [Math.PI / 2, 0, 0]], [new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 1, 6, 1, false), new GizmoMaterial({
+					color : 0x0000ff,
+				})), [0, 0, 0.5], [Math.PI / 2, 0, 0]]],
 				XYZ : [[new THREE.Mesh(new THREE.OctahedronGeometry(0.1, 0), new GizmoMaterial({
 					color : 0xffffff,
 					opacity : 0.25
@@ -352,59 +343,43 @@
 
 			THREE.TransformGizmo.call(this);
 
-			var CircleGeometry = function(radius, facing, arc) {
-
-				var geometry = new THREE.Geometry();
-				arc = arc ? arc : 1;
-				for (var i = 0; i <= 64 * arc; ++i) {
-					if (facing == 'x')
-						geometry.vertices.push(new THREE.Vector3(0, Math.cos(i / 32 * Math.PI), Math.sin(i / 32 * Math.PI)).multiplyScalar(radius));
-					if (facing == 'y')
-						geometry.vertices.push(new THREE.Vector3(Math.cos(i / 32 * Math.PI), 0, Math.sin(i / 32 * Math.PI)).multiplyScalar(radius));
-					if (facing == 'z')
-						geometry.vertices.push(new THREE.Vector3(Math.sin(i / 32 * Math.PI), Math.cos(i / 32 * Math.PI), 0).multiplyScalar(radius));
-				}
-
-				return geometry;
-			};
-
 			this.handleGizmos = {
-				X : [[new THREE.Line(new CircleGeometry(1, 'x', 1), new GizmoLineMaterial({
-					color : 0xff0000
+				X : [[new THREE.Mesh(new THREE.TorusGeometry(1, 0.01, 6, 48), new GizmoMaterial({
+					color : 0xff0000,
+				})), [0, 0, 0], [0, -Math.PI / 2, -Math.PI / 2]]],
+				Y : [[new THREE.Mesh(new THREE.TorusGeometry(1, 0.01, 6, 48), new GizmoMaterial({
+					color : 0x00ff00,
+				})), [0, 0, 0], [Math.PI / 2, 0, 0]]],
+				Z : [[new THREE.Mesh(new THREE.TorusGeometry(1, 0.01, 6, 48), new GizmoMaterial({
+					color : 0x0000ff,
+				})), [0, 0, 0], [0, 0, -Math.PI / 2]]],
+				E : [[new THREE.Mesh(new THREE.TorusGeometry(1.25, 0.01, 6, 48), new GizmoMaterial({
+					color : 0xffff00,
 				}))]],
-				Y : [[new THREE.Line(new CircleGeometry(1, 'y', 1), new GizmoLineMaterial({
-					color : 0x00ff00
-				}))]],
-				Z : [[new THREE.Line(new CircleGeometry(1, 'z', 1), new GizmoLineMaterial({
-					color : 0x0000ff
-				}))]],
-				E : [[new THREE.Line(new CircleGeometry(1.25, 'z', 1), new GizmoLineMaterial({
-					color : 0xcccc00
-				}))]],
-				XYZE : [[new THREE.Line(new CircleGeometry(1, 'z', 1), new GizmoLineMaterial({
-					color : 0x787878
-				}))]]
+				// XYZE : [[new THREE.Line(new CircleGeometry(1, 'z', 1), new GizmoLineMaterial({
+					// color : 0x787878
+				// }))]]
 			};
 
 			this.pickerGizmos = {
-				X : [[new THREE.Mesh(new THREE.TorusGeometry(1, 0.12, 4, 12), new GizmoMaterial({
+				X : [[new THREE.Mesh(new THREE.TorusGeometry(1, 0.12, 6, 12), new GizmoMaterial({
 					color : 0xff0000,
 					opacity : 0.25
 				})), [0, 0, 0], [0, -Math.PI / 2, -Math.PI / 2]]],
-				Y : [[new THREE.Mesh(new THREE.TorusGeometry(1, 0.12, 4, 12), new GizmoMaterial({
+				Y : [[new THREE.Mesh(new THREE.TorusGeometry(1, 0.12, 6, 12), new GizmoMaterial({
 					color : 0x00ff00,
 					opacity : 0.25
 				})), [0, 0, 0], [Math.PI / 2, 0, 0]]],
-				Z : [[new THREE.Mesh(new THREE.TorusGeometry(1, 0.12, 4, 12), new GizmoMaterial({
+				Z : [[new THREE.Mesh(new THREE.TorusGeometry(1, 0.12, 6, 12), new GizmoMaterial({
 					color : 0x0000ff,
 					opacity : 0.25
 				})), [0, 0, 0], [0, 0, -Math.PI / 2]]],
-				E : [[new THREE.Mesh(new THREE.TorusGeometry(1.25, 0.12, 2, 24), new GizmoMaterial({
+				E : [[new THREE.Mesh(new THREE.TorusGeometry(1.25, 0.12, 6, 24), new GizmoMaterial({
 					color : 0xffff00,
 					opacity : 0.25
 				}))]],
-				XYZE : [[new THREE.Mesh(new THREE.Geometry())]// TODO
-				]
+				// XYZE : [[new THREE.Mesh(new THREE.Geometry())]// TODO
+				// ]
 			};
 
 			this.setActivePlane = function(axis) {
@@ -495,31 +470,22 @@
 
 			arrowGeometry.merge(mesh.geometry, mesh.matrix);
 
-			var lineXGeometry = new THREE.Geometry();
-			lineXGeometry.vertices.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 0, 0));
-
-			var lineYGeometry = new THREE.Geometry();
-			lineYGeometry.vertices.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0));
-
-			var lineZGeometry = new THREE.Geometry();
-			lineZGeometry.vertices.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 1));
-
 			this.handleGizmos = {
 				X : [[new THREE.Mesh(arrowGeometry, new GizmoMaterial({
 					color : 0xff0000
-				})), [0.5, 0, 0], [0, 0, -Math.PI / 2]], [new THREE.Line(lineXGeometry, new GizmoLineMaterial({
-					color : 0xff0000
-				}))]],
+				})), [0.5, 0, 0], [0, 0, -Math.PI / 2]], [new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 1, 6, 1, false), new GizmoMaterial({
+					color : 0xff0000,
+				})), [0.5, 0, 0], [0, 0, -Math.PI / 2]]],
 				Y : [[new THREE.Mesh(arrowGeometry, new GizmoMaterial({
 					color : 0x00ff00
-				})), [0, 0.5, 0]], [new THREE.Line(lineYGeometry, new GizmoLineMaterial({
-					color : 0x00ff00
-				}))]],
+				})), [0, 0.5, 0]], [new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 1, 6, 1, false), new GizmoMaterial({
+					color : 0x00ff00,
+				})), [0, 0.5, 0]]],
 				Z : [[new THREE.Mesh(arrowGeometry, new GizmoMaterial({
 					color : 0x0000ff
-				})), [0, 0, 0.5], [Math.PI / 2, 0, 0]], [new THREE.Line(lineZGeometry, new GizmoLineMaterial({
-					color : 0x0000ff
-				}))]],
+				})), [0, 0, 0.5], [Math.PI / 2, 0, 0]], [new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 1, 6, 1, false), new GizmoMaterial({
+					color : 0x0000ff,
+				})), [0, 0, 0.5], [Math.PI / 2,0,0]]],
 				XYZ : [[new THREE.Mesh(new THREE.BoxGeometry(0.125, 0.125, 0.125), new GizmoMaterial({
 					color : 0xffffff,
 					opacity : 0.25
@@ -757,14 +723,14 @@
 
 				eye.copy(camPosition).sub(worldPosition).normalize();
 
-				if (scope.space == "local")
+				if (scope.space == "local") {
 					this.gizmo[_mode].update(worldRotation, eye);
-				
-else if (scope.space == "world")
+
+				} else if (scope.space == "world") {
 					this.gizmo[_mode].update(new THREE.Euler(), eye);
+				}
 
 				this.gizmo[_mode].highlight(scope.axis);
-
 			};
 
 			function onPointerHover(event) {
@@ -945,6 +911,10 @@ else if (scope.space == "world")
 					tempVector.multiply(parentScale);
 
 					if (scope.axis == "E") {
+						
+						var localAxis = eye.clone();
+						
+						scope.object.worldToLocal(localAxis);
 
 						point.applyMatrix4(tempMatrix.getInverse(lookAtMatrix));
 						tempVector.applyMatrix4(tempMatrix.getInverse(lookAtMatrix));
@@ -971,7 +941,7 @@ else if (scope.space == "world")
 						quaternionX.setFromAxisAngle(quaternionE, -point.clone().angleTo(tempVector));
 						quaternionXYZ.setFromRotationMatrix(worldRotationMatrix);
 
-						tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionX);
+						// tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionX);
 						tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionXYZ);
 
 						scope.object.quaternion.copy(tempQuaternion);
