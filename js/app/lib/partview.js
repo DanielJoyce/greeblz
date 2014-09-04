@@ -27,10 +27,14 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'applib/scene'], function
 		this._resetCamera();
 
 		this.$super._setRootModel.call(this, geometry, pickable, centered);
-		
+
 		// Pick widget fits in 20x20x20 cube
 		var scale = 0.5 * this._rootModel.geometry.boundingSphere.radius / 15.0;
 		this._pickWidget.scale.set(scale, scale, scale);
+		this._pubsub.publish(this._appTopic, {
+			type : "partViewPick",
+			pick : null
+		});
 
 	};
 
@@ -42,7 +46,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'applib/scene'], function
 		if (this._pickEnabled === true && this._mouseMoved === false && event.button === 0) {
 			this._pickWidget.visible = true;
 			event.preventDefault();
-			var picked = this._doPick([this._rootModel], true);
+			var picked = this._doPick(event, [this._rootModel], true);
 			// console.debug(picked);
 			if (picked.length > 0) {
 				console.debug("HIT!");
@@ -87,10 +91,12 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'applib/scene'], function
 				this._pickWidget.rotation.z = 0;
 				this._pubsub.publish(this._appTopic, {
 					type : "partViewPick",
-					url : object.geometry.name,
-					point : object.worldToLocal(point.clone()),
-					//point : point.clone()),
-					normal : normal.clone()
+					pick : {
+						url : object.geometry.name,
+						point : object.worldToLocal(point.clone()),
+						//point : point.clone()),
+						normal : normal.clone()
+					}
 				});
 			}
 		}

@@ -139,7 +139,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			};
 		},
 
-		_doPick : function(pickableObjects, recursive) {
+		_doPick : function(event, pickableObjects, recursive) {
 			var domElement = this._renderer.domElement;
 			var mouse = new THREE.Vector2();
 			var pos = $(domElement).position();
@@ -170,15 +170,15 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		 * and its children. Only Mesh objects are considered.
 		 */
 		_setPickableObjects : function(rootModel) {
-			this._pickableObjects = [];
-			var scope = this;
-			rootModel.traverse(function(obj) {
-				if (rootModel) {
-					if ( obj instanceof THREE.Mesh) {
-						scope._pickableObjects.push(rootModel);
-					}
-				}
-			});
+			this._pickableObjects = [rootModel];
+			// var scope = this;
+			// rootModel.traverse(function(obj) {
+				// if (rootModel) {
+					// if ( obj instanceof THREE.Mesh) {
+						// scope._pickableObjects.push(rootModel);
+					// }
+				// }
+			// });
 		},
 
 		_handleMouseDown : function(event) {
@@ -263,7 +263,6 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			if (centered == true) {
 				this._centerModel(model);
 			}
-			console.log(model.position);
 			if (pickable) {
 				this._setPickableObjects(model);
 			}
