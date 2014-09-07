@@ -79,7 +79,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'applib/scene'], function
 					normal = face.normal;
 				}
 				var point = pickInfo.point.clone();
-				this._orbitControls.center = point;
+				this._trackballControls.target = point;
 				var object = pickInfo.object;
 				this._pickWidget.position = point;
 				var normalMatrix = new THREE.Matrix3().getNormalMatrix(object.matrixWorld);

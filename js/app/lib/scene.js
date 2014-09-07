@@ -14,7 +14,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		this._scene = null;
 		this._camera = null;
 		this._renderer = null;
-		this._orbitControls = null;
+		this._trackballControls = null;
 		this._stats = null;
 		this._projector = null;
 		this._raycaster = null;
@@ -73,12 +73,12 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		// charCode : 'm'.charCodeAt(0)
 		// });
 		// CONTROLS
-		this._orbitControls = new THREE.TrackballControls(this._camera, this._renderer.domElement);
-		// this._orbitControls.staticMoving = true;
-		this._orbitControls.dynamicDampingFactor = 0.8;
-		this._orbitControls.maxDistance = 4900;
-		this._orbitControls.enabled = true;
-		this._orbitControls.userPan = false;
+		this._trackballControls = new THREE.TrackballControls(this._camera, this._renderer.domElement);
+		// this._trackballControls.staticMoving = true;
+		this._trackballControls.dynamicDampingFactor = 0.8;
+		this._trackballControls.maxDistance = 4900;
+		this._trackballControls.enabled = true;
+		this._trackballControls.userPan = false;
 		// STATS
 		// stats = new Stats();
 		// stats.domElement.style.position = 'absolute';
@@ -157,7 +157,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		_resetCamera : function() {
 			this._camera.position.set(0, 0, 400);
 			this._camera.lookAt(new THREE.Vector3(0, 0, 0));
-			this._orbitControls.center = new THREE.Vector3();
+			this._trackballControls.center = new THREE.Vector3();
 		},
 
 		_reset : function() {
@@ -288,7 +288,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 				case 84:
 					// T Edit Mode
 					// control.setMode("scale");
-					this._orbitControls.enabled = !this._orbitControls.enabled;
+					this._trackballControls.enabled = !this._trackballControls.enabled;
 					break;
 			}
 		},
@@ -335,7 +335,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		},
 
 		_update : function() {
-			this._orbitControls.update();
+			this._trackballControls.update();
 			// stats.update();
 		},
 
