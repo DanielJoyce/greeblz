@@ -1,4 +1,4 @@
-define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/OrbitControls', 'lib/TransformControls'], function($, Hardpoint, common) {"use strict";
+define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THREEx.FullScreen', 'lib/TrackballControls', 'lib/TransformControls'], function($, Hardpoint, common) {"use strict";
 
 	function GreeblzScene(options) {
 
@@ -73,7 +73,7 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		// charCode : 'm'.charCodeAt(0)
 		// });
 		// CONTROLS
-		this._orbitControls = new THREE.OrbitControls(this._camera, this._renderer.domElement);
+		this._orbitControls = new THREE.TrackballControls(this._camera, this._renderer.domElement);
 		this._orbitControls.maxDistance = 4900;
 		this._orbitControls.enabled = true;
 		this._orbitControls.userPan = false;
