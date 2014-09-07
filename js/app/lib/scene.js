@@ -74,6 +74,8 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		// });
 		// CONTROLS
 		this._orbitControls = new THREE.TrackballControls(this._camera, this._renderer.domElement);
+		// this._orbitControls.staticMoving = true;
+		this._orbitControls.dynamicDampingFactor = 0.8;
 		this._orbitControls.maxDistance = 4900;
 		this._orbitControls.enabled = true;
 		this._orbitControls.userPan = false;
