@@ -73,12 +73,13 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 		// charCode : 'm'.charCodeAt(0)
 		// });
 		// CONTROLS
-		this._trackballControls = new THREE.TrackballControls(this._camera, this._renderer.domElement);
+		this._trackballControls = new THREE.TrackballControls(this._renderer.domElement);
 		// this._trackballControls.staticMoving = true;
 		this._trackballControls.dynamicDampingFactor = 0.8;
 		this._trackballControls.maxDistance = 4900;
 		this._trackballControls.enabled = true;
 		this._trackballControls.userPan = false;
+		this._enableCameraNavigation();
 		// STATS
 		// stats = new Stats();
 		// stats.domElement.style.position = 'absolute';
@@ -141,6 +142,14 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			};
 		},
 
+		_enableCameraNavigation : function() {
+			this._trackballControls.attach(this._camera);
+		},
+
+		_disableCameraNavigation : function() {
+			this._trackballControls.detach();
+		},
+
 		_doPick : function(event, pickableObjects, recursive) {
 			var domElement = this._renderer.domElement;
 			var mouse = new THREE.Vector2();
@@ -175,11 +184,11 @@ define(['jquery', 'applib/hardpoint', 'applib/common', 'lib/STLLoader', 'lib/THR
 			this._pickableObjects = [rootModel];
 			// var scope = this;
 			// rootModel.traverse(function(obj) {
-				// if (rootModel) {
-					// if ( obj instanceof THREE.Mesh) {
-						// scope._pickableObjects.push(rootModel);
-					// }
-				// }
+			// if (rootModel) {
+			// if ( obj instanceof THREE.Mesh) {
+			// scope._pickableObjects.push(rootModel);
+			// }
+			// }
 			// });
 		},
 

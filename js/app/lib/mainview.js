@@ -29,11 +29,12 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		this._hasActiveSelection = false;
 		this._pickableSelectionObjects = [];
 
-		this._control = new THREE.TransformControls(this._camera, this._renderer.domElement);
+		this._control = new THREE.TrackballControls(this._renderer.domElement);
+		this._control.userZoom = false;
 		//this._control.addEventListener('change', this._render.bind(this));
-		this._control.setSpace("local");
+		//this._control.setSpace("local");
 
-		this._scene.add(this._control);
+		//this._scene.add(this._control);
 
 		this._initStateMachine();
 
@@ -417,17 +418,20 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 					if (view._selectedPickInfo.object === view._rootModel) {
 						console.log("TRANSFORM ERROR!");
 						view._control.detach();
+						view._enableCameraNavigation();
 						view._pubsub.publish(view._appTopic, {
 							type : "error",
 							error : "Root model can not be transformed. Please select a different part"
 						});
 					} else {
-						view._control.attach(view._selectedPickInfo.object.parent);
+						view._disableCameraNavigation();
+						view._control.attach(view._selectedPickInfo.object);
 					}
 
 				}
 				if (picked.length == 0) {
 					view._control.detach();
+					view._enableCameraNavigation();
 					if (view._selectedPickInfo) {
 						view._unhighlightPart(view._selectedPickInfo.object);
 						view._selectedPickInfo = null;
@@ -456,37 +460,37 @@ define(['jquery', 'applib/common', 'applib/scene'], function($, common, GreeblzS
 		this.$super._keyboardHandler(event);
 
 		// if (this._currentState !== MainViewScene.mode.transform)
-			// return;
-			
+		// return;
+
 		// TODO Add to state handling framework
 		//console.log(event.which);
 		switch ( event.keyCode ) {
-			case 81:
-				// Q
-				this._control.setSpace(this._control.space == "local" ? "world" : "local");
-				break;
-			case 87:
-				// W
-				this._control.setMode("translate");
-				break;
-			case 69:
-				// E
-				this._control.setMode("scale");
-				break;
-			case 82:
-				// R
-				this._control.setMode("rotate");
-				break;
-			case 187:
-			case 107:
-				// +,=,num+
-				this._control.setSize(control.size * 1.1);
-				break;
-			case 189:
-			case 10:
-				// -,_,num-
-				this._control.setSize(Math.max(control.size * 0.9));
-				break;
+			// case 81:
+				// // Q
+				// this._control.setSpace(this._control.space == "local" ? "world" : "local");
+				// break;
+			// case 87:
+				// // W
+				// this._control.setMode("translate");
+				// break;
+			// case 69:
+				// // E
+				// this._control.setMode("scale");
+				// break;
+			// case 82:
+				// // R
+				// this._control.setMode("rotate");
+				// break;
+			// case 187:
+			// case 107:
+				// // +,=,num+
+				// this._control.setSize(control.size * 1.1);
+				// break;
+			// case 189:
+			// case 10:
+				// // -,_,num-
+				// this._control.setSize(Math.max(control.size * 0.9));
+				// break;
 		}
 
 	};
